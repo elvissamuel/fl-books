@@ -4,8 +4,12 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { CountryFlag } from "@/components/dashboard/country-flag";
 import type { ShippingCountry } from "@/core/dashboard/types";
-import type { CreateDeliveryOutletPayload } from "@/core/pickup-stations/types";
-import { useCreateDeliveryOutlet } from "@/features/pickup-stations/use-pickup-stations";
+import type { DeliveryOutletWriteRequest } from "@/core/pickup-stations/delivery-outlet-api";
+import {
+  useCreatePrivateDeliveryOutlet,
+  usePrivateDeliveryOutlet,
+  useUpdatePrivateDeliveryOutlet,
+} from "@/features/pickup-stations/use-pickup-stations";
 import { cn } from "@/lib/utils";
 
 type CountryCode = ShippingCountry["code"];
@@ -40,21 +44,28 @@ function formatDecimal(value: number) {
 }
 
 export function AddDeliveryOutletDialog({
+  outletId = "",
   onClose,
   onSaved,
 }: {
+  outletId?: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
   const nextRangeId = useRef(2);
-  const createOutlet = useCreateDeliveryOutlet();
+  const editing = outletId.length > 0;
+  const loadedOutlet = usePrivateDeliveryOutlet(outletId);
+  const createOutlet = useCreatePrivateDeliveryOutlet();
+  const updateOutlet = useUpdatePrivateDeliveryOutlet();
+  const pending = createOutlet.isPending || updateOutlet.isPending;
+  const [formError, setFormError] = useState("");
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [stateName, setStateName] = useState("");
-  const [country, setCountry] = useState<CountryCode>("NG");
+  const [country, setCountry] = useState("Nigeria");
   const [contactName, setContactName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -78,6 +89,31 @@ export function AddDeliveryOutletDialog({
     };
   }, [onClose]);
 
+  useEffect(() => {
+    const outlet = loadedOutlet.data;
+    if (!outlet) return;
+    setName(outlet.outletName);
+    setAddress(outlet.fullAddress);
+    setCity(outlet.city);
+    setStateName(outlet.state);
+    setCountry(outlet.country);
+    setContactName(outlet.contactName);
+    setPhone(outlet.phoneNumber);
+    setEmail(outlet.emailAddress);
+    setStatus(outlet.status === "ACTIVE" ? "Active" : "Inactive");
+    setRanges(
+      outlet.weightPrices.length > 0
+        ? outlet.weightPrices.map((range, index) => ({
+            id: String(index + 1),
+            minKg: formatDecimal(range.minKg),
+            maxKg: formatDecimal(range.maxKg),
+            price: formatDecimal(range.price),
+          }))
+        : [blankRange("1")],
+    );
+    nextRangeId.current = Math.max(outlet.weightPrices.length + 1, 2);
+  }, [loadedOutlet.data]);
+
   function updateRange(id: string, field: keyof Omit<WeightRange, "id">, value: string) {
     setRanges((current) =>
       current.map((range) => (range.id === id ? { ...range, [field]: value } : range)),
@@ -90,26 +126,49 @@ export function AddDeliveryOutletDialog({
     setRanges((current) => [...current, blankRange(id)]);
   }
 
-  const selectedCountry = countries.find((option) => option.code === country) ?? countries[0];
+  const selectedCountry = countries.find((option) => option.name === country);
 
-  function buildPayload(): CreateDeliveryOutletPayload {
+  function buildRequest(): DeliveryOutletWriteRequest | string {
+    if (!name.trim() || !address.trim() || !city.trim() || !stateName.trim() || !country.trim()) {
+      return "Name, address, city, state, and country are required.";
+    }
+    if (!contactName.trim() || !phone.trim() || !email.trim()) {
+      return "Contact name, phone number, and email are required.";
+    }
     return {
-      name,
-      address,
-      city,
-      state: stateName,
-      country: selectedCountry.name,
-      contactName,
-      phone,
-      email,
-      status: status === "Active" ? "active" : "inactive",
-      weightRanges: ranges.map((range, index) => ({
-        serialNumber: index + 1,
+      outletName: name.trim(),
+      fullAddress: address.trim(),
+      city: city.trim(),
+      state: stateName.trim(),
+      country: country.trim(),
+      contactName: contactName.trim(),
+      phoneNumber: phone.trim(),
+      emailAddress: email.trim(),
+      status: status === "Active" ? "ACTIVE" : "INACTIVE",
+      weightPrices: ranges.map((range) => ({
         minKg: Number.parseFloat(range.minKg) || 0,
         maxKg: Number.parseFloat(range.maxKg) || 0,
         price: Number.parseFloat(range.price) || 0,
       })),
     };
+  }
+
+  function saveOutlet() {
+    const request = buildRequest();
+    if (typeof request === "string") {
+      setFormError(request);
+      return;
+    }
+    setFormError("");
+    const options = {
+      onSuccess: onSaved,
+      onError: (error: Error) => setFormError(error.message),
+    };
+    if (editing) {
+      updateOutlet.mutate({ outletId, request }, options);
+      return;
+    }
+    createOutlet.mutate(request, options);
   }
 
   return (
@@ -130,7 +189,7 @@ export function AddDeliveryOutletDialog({
       >
         <div className="flex items-center justify-between px-6 pt-4 pb-1">
           <h2 id={titleId} className="text-lg font-semibold tracking-tight text-neutral-950">
-            Add Delivery Outlet
+            {editing ? "Edit Delivery Outlet" : "Add Delivery Outlet"}
           </h2>
           <button
             type="button"
@@ -146,9 +205,16 @@ export function AddDeliveryOutletDialog({
           className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-6 pt-4 pb-8"
           onSubmit={(event) => {
             event.preventDefault();
-            createOutlet.mutate(buildPayload(), { onSuccess: onSaved });
+            saveOutlet();
           }}
         >
+          {editing && loadedOutlet.isLoading ? (
+            <p className="text-sm text-neutral-500">Loading outlet…</p>
+          ) : null}
+          {loadedOutlet.error instanceof Error ? (
+            <p className="text-sm text-danger">{loadedOutlet.error.message}</p>
+          ) : null}
+          {formError ? <p className="text-sm text-danger">{formError}</p> : null}
           <Field id="outlet-name" label="Delivery Outlet Name">
             <input
               id="outlet-name"
@@ -204,8 +270,8 @@ export function AddDeliveryOutletDialog({
                 onClick={() => setOpenMenu((current) => (current === "country" ? null : "country"))}
                 className={cn(controlClass, "flex items-center gap-2 text-left")}
               >
-                <CountryFlag code={selectedCountry.code} />
-                <span className="flex-1">{selectedCountry.name}</span>
+                {selectedCountry ? <CountryFlag code={selectedCountry.code} /> : null}
+                <span className="flex-1">{country}</span>
                 <ChevronDown className="size-4 text-neutral-400" />
               </button>
               {openMenu === "country" ? (
@@ -219,9 +285,9 @@ export function AddDeliveryOutletDialog({
                       <button
                         type="button"
                         role="option"
-                        aria-selected={option.code === country}
+                        aria-selected={option.name === country}
                         onClick={() => {
-                          setCountry(option.code);
+                          setCountry(option.name);
                           setOpenMenu(null);
                         }}
                         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50"
@@ -361,7 +427,7 @@ export function AddDeliveryOutletDialog({
 
           <button
             type="submit"
-            disabled={createOutlet.isPending}
+            disabled={pending || (editing && loadedOutlet.isLoading)}
             className="h-12 w-full rounded-xl bg-brand text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
           >
             Save Location

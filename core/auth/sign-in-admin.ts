@@ -18,17 +18,15 @@ export async function signInAdmin(
     return { fieldErrors: validated.fieldErrors };
   }
 
-  const admin = await dependencies.authenticator.authenticate(
-    validated.credentials,
-  );
+  const result = await dependencies.authenticator.authenticate(validated.credentials);
 
-  if (!admin) {
+  if (!result.ok) {
     return {
       fieldErrors: {},
-      message: "Invalid email or password.",
+      message: result.message,
     };
   }
 
-  await dependencies.sessions.create(admin);
+  await dependencies.sessions.create(result.admin);
   return null;
 }

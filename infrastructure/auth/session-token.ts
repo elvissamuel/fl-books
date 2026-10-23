@@ -16,7 +16,12 @@ function getSigningKey() {
 }
 
 export async function encryptAdminSession(admin: AuthenticatedAdmin) {
-  return new SignJWT({ userId: admin.id, role: "admin" })
+  return new SignJWT({
+    userId: admin.id,
+    role: "admin",
+    accessToken: admin.accessToken,
+    refreshToken: admin.refreshToken,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(SESSION_DURATION)
@@ -35,11 +40,21 @@ export async function decryptAdminSession(
       algorithms: ["HS256"],
     });
 
-    if (typeof payload.userId !== "string" || payload.role !== "admin") {
+    if (
+      typeof payload.userId !== "string" ||
+      payload.role !== "admin" ||
+      typeof payload.accessToken !== "string" ||
+      typeof payload.refreshToken !== "string"
+    ) {
       return null;
     }
 
-    return { userId: payload.userId, role: "admin" };
+    return {
+      userId: payload.userId,
+      role: "admin",
+      accessToken: payload.accessToken,
+      refreshToken: payload.refreshToken,
+    };
   } catch {
     return null;
   }

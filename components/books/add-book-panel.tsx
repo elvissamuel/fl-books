@@ -5,67 +5,38 @@ import Image from "next/image";
 import { ArrowLeft, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { BookCover } from "@/components/books/book-cover";
 import { Button } from "@/components/ui/button";
+import {
+  bookDraftFromCatalog,
+  createBookRequestFromDraft,
+  emptyBookDraft,
+  updateBookRequestFromDraft,
+} from "@/core/books/book-draft";
 import type { BookDraft, PickupAllocation } from "@/core/books/types";
+import { useCreatePrivateBook, usePrivateBook, useUpdatePrivateBook } from "@/features/books/use-books";
 import { cn } from "@/lib/utils";
-
-const sampleBookDraft: BookDraft = {
-  title: "Be Different",
-  authorName: "Femi Lazarus",
-  stockQuantity: "350",
-  shortSummary:
-    "An inspiring and poetic exploration of heritage, culture, and transformation along the historic waterways.",
-  description:
-    "The Whispers of the Niger explores the rich tapestry of stories, oral traditions, and wisdom from generations past. Written with eloquent precision by Prof. Femi Lazarus, this publication acts as both a historical preservation and a literary masterpiece for contemporary readers. Discover the vibrant life along the river, seasons of resilience, and the cultural landmarks that shape today's African identity.",
-  weightKg: "0.45",
-  price: "N3500",
-  inStorePickup: true,
-  deliveryDispatch: true,
-  inventoryLimit: "3000",
-  allocations: [
-    {
-      id: "lagos",
-      name: "Lagos pickup station",
-      address: "452 Broadway & Spring St",
-      quantity: "500",
-      enabled: true,
-    },
-    {
-      id: "abuja",
-      name: "Abuja pickup station",
-      address: "452 Broadway & Spring St",
-      quantity: "500",
-      enabled: true,
-    },
-    {
-      id: "kano",
-      name: "Kano pickup station",
-      address: "452 Broadway & Spring St",
-      quantity: "500",
-      enabled: true,
-    },
-    {
-      id: "ph",
-      name: "PH pickup station",
-      address: "452 Broadway & Spring St",
-      quantity: "500",
-      enabled: true,
-    },
-  ],
-};
 
 const controlClass =
   "w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 export function AddBookPanel({
+  mode,
+  bookId = "",
   onClose,
-  onPublished,
+  onSaved,
 }: {
+  mode: "create" | "edit";
+  bookId?: string;
   onClose: () => void;
-  onPublished: () => void;
+  onSaved: () => void;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLElement>(null);
-  const [draft, setDraft] = useState<BookDraft>(sampleBookDraft);
+  const [draft, setDraft] = useState<BookDraft>(emptyBookDraft);
+  const [formError, setFormError] = useState("");
+  const loadedBook = usePrivateBook(mode === "edit" ? bookId : "");
+  const createBook = useCreatePrivateBook();
+  const updateBook = useUpdatePrivateBook();
+  const pending = createBook.isPending || updateBook.isPending;
 
   useEffect(() => {
     panelRef.current?.focus();
@@ -78,17 +49,50 @@ export function AddBookPanel({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
+  useEffect(() => {
+    if (loadedBook.data) setDraft(bookDraftFromCatalog(loadedBook.data));
+  }, [loadedBook.data]);
+
   function updateDraft<K extends keyof BookDraft>(field: K, value: BookDraft[K]) {
     setDraft((current) => ({ ...current, [field]: value }));
   }
 
-  function updateAllocation(id: string, patch: Partial<PickupAllocation>) {
+  function updateAllocation(index: number, patch: Partial<PickupAllocation>) {
     setDraft((current) => ({
       ...current,
-      allocations: current.allocations.map((station) =>
-        station.id === id ? { ...station, ...patch } : station,
+      allocations: current.allocations.map((station, stationIndex) =>
+        stationIndex === index ? { ...station, ...patch } : station,
       ),
     }));
+  }
+
+  function publishBook() {
+    setFormError("");
+    if (mode === "create") {
+      const result = createBookRequestFromDraft(draft);
+      if (!result.ok) {
+        setFormError(result.message);
+        return;
+      }
+      createBook.mutate(result.request, {
+        onSuccess: onSaved,
+        onError: (error) => setFormError(error.message),
+      });
+      return;
+    }
+
+    const result = updateBookRequestFromDraft(draft);
+    if (!result.ok) {
+      setFormError(result.message);
+      return;
+    }
+    updateBook.mutate(
+      { bookId, request: result.request },
+      {
+        onSuccess: onSaved,
+        onError: (error) => setFormError(error.message),
+      },
+    );
   }
 
   return (
@@ -116,8 +120,13 @@ export function AddBookPanel({
             <ArrowLeft className="size-4" strokeWidth={1.75} />
             Back
           </button>
-          <Button type="submit" form="add-book-form" className="h-8 rounded-full px-3.5 text-[13px]">
-            Publish book
+          <Button
+            type="submit"
+            form="add-book-form"
+            disabled={pending || (mode === "edit" && loadedBook.isLoading)}
+            className="h-8 rounded-full px-3.5 text-[13px]"
+          >
+            {pending ? "Saving…" : mode === "create" ? "Publish book" : "Save changes"}
           </Button>
         </div>
 
@@ -126,12 +135,19 @@ export function AddBookPanel({
           className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-8"
           onSubmit={(event) => {
             event.preventDefault();
-            onPublished();
+            publishBook();
           }}
         >
           <h2 id={titleId} className="text-lg font-semibold tracking-tight text-neutral-950">
-            Add new Book
+            {mode === "create" ? "Add new Book" : "Edit book"}
           </h2>
+          {mode === "edit" && loadedBook.isLoading ? (
+            <p className="mt-3 text-sm text-neutral-500">Loading book…</p>
+          ) : null}
+          {loadedBook.error instanceof Error ? (
+            <p className="mt-3 text-sm text-danger">{loadedBook.error.message}</p>
+          ) : null}
+          {formError ? <p className="mt-3 text-sm text-danger">{formError}</p> : null}
 
           <div className="mt-4 flex flex-col gap-3.5">
             <Field id="book-title" label="Book Title">
@@ -149,6 +165,15 @@ export function AddBookPanel({
                   id="author-name"
                   value={draft.authorName}
                   onChange={(event) => updateDraft("authorName", event.target.value)}
+                  className={cn(controlClass, "h-10")}
+                />
+              </Field>
+              <Field id="category-id" label="Category ID">
+                <input
+                  id="category-id"
+                  value={draft.categoryId}
+                  onChange={(event) => updateDraft("categoryId", event.target.value)}
+                  placeholder="Category ID"
                   className={cn(controlClass, "h-10")}
                 />
               </Field>
@@ -219,7 +244,10 @@ export function AddBookPanel({
             <p className="mt-0.5 text-[13px] text-neutral-400">
               Upload the front cover of the book and optional gallery shots
             </p>
-            <BookCovers />
+            <BookCovers
+              coverImageUrls={draft.coverImageUrls}
+              onChange={(value) => updateDraft("coverImageUrls", value)}
+            />
           </section>
 
           <section className="mt-6">
@@ -240,6 +268,14 @@ export function AddBookPanel({
                 checked={draft.deliveryDispatch}
                 onCheckedChange={(checked) => updateDraft("deliveryDispatch", checked)}
               />
+              {mode === "create" ? (
+                <ToggleRow
+                  title="Bulk purchase"
+                  description="Allow this book to be bought in bulk"
+                  checked={draft.bulkPurchaseAvailable}
+                  onCheckedChange={(checked) => updateDraft("bulkPurchaseAvailable", checked)}
+                />
+              ) : null}
             </div>
           </section>
 
@@ -261,30 +297,53 @@ export function AddBookPanel({
               />
             </div>
             <div className="mt-3 flex flex-col gap-3">
-              {draft.allocations.map((station) => (
+              {draft.allocations.map((station, index) => (
                 <div
-                  key={station.id}
+                  key={`${station.id}-${index}`}
                   className="flex items-center justify-between gap-4 rounded-xl border border-neutral-200 px-4 py-3"
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-neutral-900">{station.name}</p>
-                    <p className="text-[13px] text-neutral-400">{station.address}</p>
+                  <div className="min-w-0 flex-1">
+                    <input
+                      aria-label={`Pickup location ${index + 1}`}
+                      value={station.id}
+                      placeholder="Pickup location ID"
+                      onChange={(event) => updateAllocation(index, { id: event.target.value })}
+                      className={cn(controlClass, "h-10")}
+                    />
+                    {station.address ? (
+                      <p className="mt-1 text-[13px] text-neutral-400">{station.address}</p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-4">
                     <QuantityField
-                      label={`${station.name} quantity`}
+                      label={`Allocation ${index + 1} quantity`}
                       value={station.quantity}
-                      onChange={(value) => updateAllocation(station.id, { quantity: value })}
+                      onChange={(value) => updateAllocation(index, { quantity: value })}
                       className="w-[88px]"
                     />
                     <Toggle
-                      label={`${station.name} allocation`}
+                      label={`Allocation ${index + 1}`}
                       checked={station.enabled}
-                      onCheckedChange={(enabled) => updateAllocation(station.id, { enabled })}
+                      onCheckedChange={(enabled) => updateAllocation(index, { enabled })}
                     />
                   </div>
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft((current) => ({
+                    ...current,
+                    allocations: [
+                      ...current.allocations,
+                      { id: "", name: "", address: "", quantity: "0", enabled: true },
+                    ],
+                  }))
+                }
+                className="self-start text-sm font-medium text-brand"
+              >
+                Add allocation
+              </button>
             </div>
           </section>
         </form>
@@ -312,17 +371,39 @@ function Field({
   );
 }
 
-function BookCovers() {
+function BookCovers({
+  coverImageUrls,
+  onChange,
+}: {
+  coverImageUrls: string;
+  onChange: (value: string) => void;
+}) {
+  const hostedUrls = coverImageUrls
+    .split(/[\s,]+/)
+    .map((url) => url.trim())
+    .filter((url) => url.startsWith("http://") || url.startsWith("https://"));
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [gallery, setGallery] = useState<Array<string | null>>([null, null]);
 
+  const previewUrl = coverUrl ?? hostedUrls[0] ?? null;
+
   return (
     <div className="mt-3 rounded-2xl border border-neutral-200 px-4 py-4">
+      <label className="mb-3 block text-[13px] text-neutral-500" htmlFor="cover-image-urls">
+        Cover image URLs
+      </label>
+      <input
+        id="cover-image-urls"
+        value={coverImageUrls}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="https://example.com/cover.png"
+        className={cn(controlClass, "mb-4 h-10")}
+      />
       <div className="flex flex-wrap items-center gap-8">
         <label className="flex h-[104px] w-[112px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-neutral-200 text-neutral-400 hover:bg-neutral-50">
-          {coverUrl ? (
+          {previewUrl ? (
             <Image
-              src={coverUrl}
+              src={previewUrl}
               alt=""
               width={48}
               height={64}

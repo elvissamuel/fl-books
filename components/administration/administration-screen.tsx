@@ -1,14 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Bell, Plus, Search } from "lucide-react";
-import { AddAdminDialog } from "@/components/administration/add-admin-dialog";
+import { AdminAccountDialog } from "@/components/administration/add-admin-dialog";
+import { AdminStatusDialog } from "@/components/administration/admin-status-dialog";
 import { AdministrationTable } from "@/components/administration/administration-table";
+import { BooksPagination } from "@/components/books/books-pagination";
 import { Button } from "@/components/ui/button";
+import type { AdminAccount } from "@/core/auth/admin-api";
 import type { AdminListFilter } from "@/core/administration/types";
-import { useStaffAdmins } from "@/features/administration/use-administration";
-import { defaultAdminListParams } from "@/infrastructure/administration/administration-api";
+import {
+  useActivateAdminAccount,
+  useAdminAccounts,
+  useDeactivateAdminAccount,
+  useDeleteAdminAccount,
+} from "@/features/auth/use-admin-auth";
 import { cn } from "@/lib/utils";
+
+const pageSize = 10;
 
 const filters: { id: AdminListFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -17,10 +27,42 @@ const filters: { id: AdminListFilter; label: string }[] = [
 ];
 
 export function AdministrationScreen() {
-  const [search, setSearch] = useState(defaultAdminListParams.search);
-  const [filter, setFilter] = useState<AdminListFilter>(defaultAdminListParams.filter);
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<AdminListFilter>("all");
+  const [page, setPage] = useState(1);
   const [adding, setAdding] = useState(false);
-  const { data } = useStaffAdmins({ search, filter });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [statusChange, setStatusChange] = useState<{
+    admin: AdminAccount;
+    action: "activate" | "deactivate";
+  } | null>(null);
+  const [actionError, setActionError] = useState("");
+  const admins = useAdminAccounts({
+    page,
+    size: pageSize,
+    search,
+    active: filter === "all" ? undefined : filter === "active",
+  });
+  const activateAdmin = useActivateAdminAccount();
+  const deactivateAdmin = useDeactivateAdminAccount();
+  const deleteAdmin = useDeleteAdminAccount();
+
+  async function refresh() {
+    await queryClient.invalidateQueries({ queryKey: ["admins"] });
+  }
+
+  function runAction(admin: AdminAccount, task: (adminId: string) => Promise<unknown>) {
+    setActionError("");
+    task(admin.adminId)
+      .then(() => refresh())
+      .catch((error: unknown) => {
+        setActionError(error instanceof Error ? error.message : "Request failed.");
+      });
+  }
+
+  const pageData = admins.data;
+  const rows = Array.isArray(pageData?.data) ? pageData.data : [];
 
   return (
     <div className="px-5 pt-5 pb-8">
@@ -53,7 +95,10 @@ export function AdministrationScreen() {
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-neutral-400" />
           <input
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
             placeholder="Search books"
             className="h-10 w-full rounded-lg border border-neutral-200/70 bg-[#f7f7f8] pr-3 pl-9 text-sm text-neutral-800 outline-none placeholder:text-neutral-400 focus:border-brand focus:ring-2 focus:ring-brand/15"
           />
@@ -66,7 +111,10 @@ export function AdministrationScreen() {
                 key={option.id}
                 type="button"
                 aria-pressed={selected}
-                onClick={() => setFilter(option.id)}
+                onClick={() => {
+                  setFilter(option.id);
+                  setPage(1);
+                }}
                 className={cn(
                   "h-8 rounded-full border px-3 text-xs font-medium",
                   selected
@@ -81,9 +129,81 @@ export function AdministrationScreen() {
         </div>
       </div>
 
-      {data ? <AdministrationTable admins={data.items} /> : null}
+      {admins.error instanceof Error ? (
+        <p className="mb-3 text-sm text-danger">{admins.error.message}</p>
+      ) : null}
+      {actionError ? <p className="mb-3 text-sm text-danger">{actionError}</p> : null}
+      {admins.isLoading ? <p className="mb-3 text-sm text-neutral-500">Loading admins…</p> : null}
+
+      <AdministrationTable
+        admins={rows}
+        onEdit={(admin) => setEditingId(admin.adminId)}
+        onActivate={(admin) => setStatusChange({ admin, action: "activate" })}
+        onDeactivate={(admin) => setStatusChange({ admin, action: "deactivate" })}
+        onDelete={(admin) => {
+          const name = `${admin.firstName} ${admin.lastName}`.trim();
+          if (!window.confirm(`Delete ${name}?`)) return;
+          runAction(admin, deleteAdmin.mutateAsync);
+        }}
+      />
+
+      {pageData ? (
+        <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-neutral-500">
+            Page {page} of {Math.max(pageData.totalPage, 1)}
+          </p>
+          <BooksPagination
+            page={page}
+            totalPages={Math.max(pageData.totalPage, 1)}
+            onPageChange={setPage}
+          />
+        </div>
+      ) : null}
+
       {adding ? (
-        <AddAdminDialog onClose={() => setAdding(false)} onSaved={() => setAdding(false)} />
+        <AdminAccountDialog
+          mode="create"
+          onClose={() => setAdding(false)}
+          onSaved={() => {
+            setAdding(false);
+            void refresh();
+          }}
+        />
+      ) : null}
+      {statusChange ? (
+        <AdminStatusDialog
+          name={`${statusChange.admin.firstName} ${statusChange.admin.lastName}`.trim()}
+          action={statusChange.action}
+          pending={activateAdmin.isPending || deactivateAdmin.isPending}
+          onClose={() => setStatusChange(null)}
+          onConfirm={() => {
+            const { admin, action } = statusChange;
+            const task =
+              action === "activate" ? activateAdmin.mutateAsync : deactivateAdmin.mutateAsync;
+            setActionError("");
+            task(admin.adminId)
+              .then(() => {
+                setStatusChange(null);
+                return refresh();
+              })
+              .catch((error: unknown) => {
+                setStatusChange(null);
+                setActionError(error instanceof Error ? error.message : "Request failed.");
+              });
+          }}
+        />
+      ) : null}
+      {editingId ? (
+        <AdminAccountDialog
+          mode="edit"
+          adminId={editingId}
+          onClose={() => setEditingId(null)}
+          onSaved={() => {
+            setEditingId(null);
+            void refresh();
+            void queryClient.invalidateQueries({ queryKey: ["admin-account", editingId] });
+          }}
+        />
       ) : null}
     </div>
   );

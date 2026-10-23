@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { BookCover } from "@/components/books/book-cover";
 import { Badge } from "@/components/ui/badge";
@@ -20,24 +21,43 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatWeight } from "@/core/books/format";
-import type { Book, BookStatus } from "@/core/books/types";
+import { formatWeightFromGrams } from "@/core/books/format";
+import type { BookPublicationStatus, CatalogBook } from "@/core/books/private-api";
 import { formatNaira } from "@/core/dashboard/format";
 import { cn } from "@/lib/utils";
 
-const statusStyles: Record<BookStatus, string> = {
-  active: "bg-emerald-50 text-emerald-600",
-  inactive: "bg-neutral-100 text-neutral-500",
+const statusStyles: Record<string, string> = {
+  Active: "bg-emerald-50 text-emerald-600",
+  Inactive: "bg-neutral-100 text-neutral-500",
+  Draft: "bg-amber-50 text-amber-700",
+  Archived: "bg-neutral-100 text-neutral-500",
 };
+
+const publicationLabels: Record<BookPublicationStatus, string> = {
+  DRAFT: "Draft",
+  AVAILABLE: "Active",
+  NOT_AVAILABLE: "Inactive",
+  ARCHIVED: "Archived",
+};
+
+function bookStatusLabel(book: CatalogBook) {
+  if (book.status) return publicationLabels[book.status];
+  if (typeof book.active === "boolean") return book.active ? "Active" : "Inactive";
+  return "—";
+}
 
 export function BooksTable({
   books,
   selectedIds,
   onSelectedIdsChange,
+  onEdit,
+  onDelete,
 }: {
-  books: Book[];
+  books: CatalogBook[];
   selectedIds: string[];
   onSelectedIdsChange: (ids: string[]) => void;
+  onEdit: (book: CatalogBook) => void;
+  onDelete: (book: CatalogBook) => void;
 }) {
   const pageIds = books.map((book) => book.id);
   const selectedOnPage = pageIds.filter((id) => selectedIds.includes(id));
@@ -101,27 +121,29 @@ export function BooksTable({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-3 py-1">
-                  <BookCover src={book.coverUrl} title={book.title} />
+                  <BookCover src={book.coverImageUrls[0] ?? null} title={book.title} />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-neutral-900">{book.title}</p>
-                    <p className="text-xs text-neutral-500">{book.author}</p>
+                    <p className="text-xs text-neutral-500">{book.authorName}</p>
                   </div>
                 </div>
               </TableCell>
               <TableCell className="text-sm text-neutral-700 tabular-nums">
                 {formatNaira(book.price)}
               </TableCell>
-              <TableCell className="text-sm text-neutral-700 tabular-nums">{book.stock}</TableCell>
-              <TableCell className="text-sm text-neutral-700">{formatWeight(book.weightKg)}</TableCell>
+              <TableCell className="text-sm text-neutral-700 tabular-nums">{book.stockQuantity}</TableCell>
+              <TableCell className="text-sm text-neutral-700">
+                {formatWeightFromGrams(book.weightInGrams)}
+              </TableCell>
               <TableCell>
                 <Badge
                   variant="secondary"
                   className={cn(
-                    "rounded-full border-0 px-2.5 font-medium capitalize",
-                    statusStyles[book.status],
+                    "rounded-full border-0 px-2.5 font-medium",
+                    statusStyles[bookStatusLabel(book)],
                   )}
                 >
-                  {book.status === "active" ? "Active" : "Inactive"}
+                  {bookStatusLabel(book)}
                 </Badge>
               </TableCell>
               <TableCell className="pr-3">
@@ -138,12 +160,14 @@ export function BooksTable({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View book</DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/admin/books/${book.id}`}>View book</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onEdit(book)}>
                       <Pencil className="size-4" />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem variant="destructive">
+                    <DropdownMenuItem variant="destructive" onSelect={() => onDelete(book)}>
                       <Trash2 className="size-4" />
                       Delete
                     </DropdownMenuItem>

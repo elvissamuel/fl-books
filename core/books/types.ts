@@ -45,13 +45,16 @@ export type PickupAllocation = {
 export type BookDraft = {
   title: string;
   authorName: string;
+  categoryId: string;
   stockQuantity: string;
   shortSummary: string;
   description: string;
   weightKg: string;
   price: string;
+  coverImageUrls: string;
   inStorePickup: boolean;
   deliveryDispatch: boolean;
+  bulkPurchaseAvailable: boolean;
   inventoryLimit: string;
   allocations: PickupAllocation[];
 };
