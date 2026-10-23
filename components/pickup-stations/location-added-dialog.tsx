@@ -4,7 +4,13 @@ import { useEffect, useId, useRef } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function LocationAddedDialog({ onDone }: { onDone: () => void }) {
+export function LocationAddedDialog({
+  kind,
+  onDone,
+}: {
+  kind: "pickup" | "outlet";
+  onDone: () => void;
+}) {
   const titleId = useId();
   const descriptionId = useId();
   const dialogRef = useRef<HTMLElement>(null);
@@ -44,7 +50,9 @@ export function LocationAddedDialog({ onDone }: { onDone: () => void }) {
           Location Added Successfully
         </h2>
         <p id={descriptionId} className="mx-auto mt-2 max-w-[280px] text-sm leading-5 text-[#8d97ab]">
-          The delivery outlet has been added successfully and is now available in the system.
+          {kind === "pickup"
+            ? "The pickup location has been added successfully and is now available in the system."
+            : "The delivery outlet has been added successfully and is now available in the system."}
         </p>
         <Button
           type="button"

@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Bell, Plus, Search } from "lucide-react";
 import { AddBookPanel } from "@/components/books/add-book-panel";
 import { BookUploadedDialog } from "@/components/books/book-uploaded-dialog";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { BooksTable } from "@/components/books/books-table";
 import { Button } from "@/components/ui/button";
+import type { BookListQuery } from "@/core/books/private-api";
 import type { BookListFilter } from "@/core/books/types";
-import { useBooks } from "@/features/books/use-books";
-import { defaultBookListParams } from "@/infrastructure/books/books-api";
+import { booksKeys } from "@/features/books/query-keys";
+import { useDeletePrivateBook, usePrivateBooks } from "@/features/books/use-books";
 import { cn } from "@/lib/utils";
+
+const pageSize = 10;
 
 const filters: { id: BookListFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -21,43 +25,66 @@ const filters: { id: BookListFilter; label: string }[] = [
   { id: "inactive", label: "Inactive" },
 ];
 
+function bookQuery(page: number, search: string, filter: BookListFilter): BookListQuery {
+  const query: BookListQuery = { page, size: pageSize, search };
+  if (filter === "active") query.active = true;
+  if (filter === "inactive") query.active = false;
+  if (filter === "stock") {
+    query.sortBy = "stockQuantity";
+    query.direction = "DESC";
+  }
+  if (filter === "price") {
+    query.sortBy = "price";
+    query.direction = "DESC";
+  }
+  if (filter === "weight") {
+    query.sortBy = "weightInGrams";
+    query.direction = "DESC";
+  }
+  return query;
+}
+
 export function BooksScreen() {
-  const [search, setSearch] = useState(defaultBookListParams.search);
-  const [filter, setFilter] = useState<BookListFilter>(defaultBookListParams.filter);
-  const [page, setPage] = useState(defaultBookListParams.page);
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<BookListFilter>("all");
+  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [addingBook, setAddingBook] = useState(false);
+  const [panel, setPanel] = useState<null | { mode: "create" } | { mode: "edit"; bookId: string }>(
+    null,
+  );
   const [published, setPublished] = useState(false);
-  const { data } = useBooks({
-    search,
-    filter,
-    page,
-    pageSize: defaultBookListParams.pageSize,
-  });
+  const [actionError, setActionError] = useState("");
+  const books = usePrivateBooks(bookQuery(page, search, filter));
+  const deleteBook = useDeletePrivateBook();
+  const pageData = books.data;
+  const rows = Array.isArray(pageData?.data) ? pageData.data : [];
+
+  async function refresh() {
+    await queryClient.invalidateQueries({ queryKey: booksKeys.all });
+  }
 
   function updateSearch(value: string) {
     setSearch(value);
-    setPage(value.trim() === "" && filter === "all" ? defaultBookListParams.page : 1);
+    setPage(1);
     setSelectedIds([]);
   }
 
   function updateFilter(next: BookListFilter) {
     setFilter(next);
-    setPage(next === "all" && search.trim() === "" ? defaultBookListParams.page : 1);
+    setPage(1);
     setSelectedIds([]);
   }
 
   return (
     <div className="px-5 pt-5 pb-8">
       <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold tracking-tight text-neutral-950">
-          Book management
-        </h1>
+        <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Book management</h1>
         <div className="flex items-center gap-3">
           <Button
             type="button"
             className="h-9 rounded-full px-3.5 text-sm"
-            onClick={() => setAddingBook(true)}
+            onClick={() => setPanel({ mode: "create" })}
           >
             <Plus className="size-4" />
             Add new book
@@ -108,34 +135,55 @@ export function BooksScreen() {
         </div>
       </div>
 
-      {data ? (
-        <>
-          <BooksTable
-            books={data.items}
-            selectedIds={selectedIds}
-            onSelectedIdsChange={setSelectedIds}
-          />
-          <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-neutral-500">
-              Page {data.page} of {data.totalPages}
-            </p>
-            <BooksPagination
-              page={data.page}
-              totalPages={data.totalPages}
-              onPageChange={(nextPage) => {
-                setPage(nextPage);
-                setSelectedIds([]);
-              }}
-            />
-          </div>
-        </>
+      {books.error instanceof Error ? (
+        <p className="mb-3 text-sm text-danger">{books.error.message}</p>
       ) : null}
-      {addingBook ? (
+      {actionError ? <p className="mb-3 text-sm text-danger">{actionError}</p> : null}
+      {books.isLoading ? <p className="mb-3 text-sm text-neutral-500">Loading books…</p> : null}
+
+      <BooksTable
+        books={rows}
+        selectedIds={selectedIds}
+        onSelectedIdsChange={setSelectedIds}
+        onEdit={(book) => setPanel({ mode: "edit", bookId: book.id })}
+        onDelete={(book) => {
+          if (!window.confirm(`Delete ${book.title}?`)) return;
+          setActionError("");
+          deleteBook
+            .mutateAsync(book.id)
+            .then(() => refresh())
+            .catch((error: unknown) => {
+              setActionError(error instanceof Error ? error.message : "Request failed.");
+            });
+        }}
+      />
+
+      {pageData ? (
+        <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-neutral-500">
+            Page {page} of {Math.max(pageData.totalPage, 1)}
+          </p>
+          <BooksPagination
+            page={page}
+            totalPages={Math.max(pageData.totalPage, 1)}
+            onPageChange={(nextPage) => {
+              setPage(nextPage);
+              setSelectedIds([]);
+            }}
+          />
+        </div>
+      ) : null}
+
+      {panel ? (
         <AddBookPanel
-          onClose={() => setAddingBook(false)}
-          onPublished={() => {
-            setAddingBook(false);
-            setPublished(true);
+          mode={panel.mode}
+          bookId={panel.mode === "edit" ? panel.bookId : undefined}
+          onClose={() => setPanel(null)}
+          onSaved={() => {
+            const created = panel.mode === "create";
+            setPanel(null);
+            if (created) setPublished(true);
+            void refresh();
           }}
         />
       ) : null}

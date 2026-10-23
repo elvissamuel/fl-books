@@ -27,9 +27,12 @@ export const envAdminAuthenticator: AdminAuthenticator = {
     const passwordMatches = matches(credentials.password, password);
 
     if (!emailMatches || !passwordMatches) {
-      return null;
+      return { ok: false, message: "Invalid email address or password." };
     }
 
-    return { id: "admin" };
+    return {
+      ok: true,
+      admin: { id: "admin", accessToken: "", refreshToken: "" },
+    };
   },
 };
