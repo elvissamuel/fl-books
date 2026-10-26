@@ -1,69 +1,35 @@
-"use server";
+"use client";
 
-import type { ApiResponse } from "@/core/auth/admin-api";
-import type { CurrencyWriteRequest } from "@/core/currencies/currency";
-import { adminActionFailure, readActionSession } from "@/infrastructure/auth/admin-action";
-import { privateCurrenciesApi } from "@/infrastructure/currencies/http-private-currencies-api";
+import type { Currency, CurrencyWriteRequest } from "@/core/currencies/currency";
+import { browserApi } from "@/infrastructure/http/browser-api";
 
-export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; sessionExpired?: boolean };
-
-async function run<T>(
-  task: (accessToken: string) => Promise<ApiResponse<T>>,
-): Promise<ActionResult<T>> {
-  const opened = await readActionSession();
-  if (!opened.session) return opened.failure;
-
-  try {
-    return unwrap(await task(opened.session.accessToken));
-  } catch (error) {
-    return adminActionFailure(error);
-  }
-}
-
-function unwrap<T>(response: ApiResponse<T>): ActionResult<T> {
-  if (!response.success || response.data == null) {
-    return { ok: false, message: response.message || "Request failed." };
-  }
-  return { ok: true, data: response.data };
-}
+const list = "/api/v1/currencies/private";
+const byId = (currencyId: string) => `/api/v1/currencies/private/${encodeURIComponent(currencyId)}`;
 
 export async function listPrivateCurrencies() {
-  return run((accessToken) => privateCurrenciesApi.list(accessToken));
+  return browserApi<Currency[]>(list);
 }
 
 export async function getPrivateCurrency(currencyId: string) {
-  return run((accessToken) => privateCurrenciesApi.get(currencyId, accessToken));
+  return browserApi<Currency>(byId(currencyId));
 }
 
 export async function createPrivateCurrency(request: CurrencyWriteRequest) {
-  return run((accessToken) => privateCurrenciesApi.create(request, accessToken));
+  return browserApi<Currency>(list, { method: "POST", json: request });
 }
 
 export async function updatePrivateCurrency(currencyId: string, request: CurrencyWriteRequest) {
-  return run((accessToken) => privateCurrenciesApi.update(currencyId, request, accessToken));
+  return browserApi<Currency>(byId(currencyId), { method: "PATCH", json: request });
 }
 
 export async function deletePrivateCurrency(currencyId: string) {
-  const opened = await readActionSession();
-  if (!opened.session) return opened.failure;
-
-  try {
-    const response = await privateCurrenciesApi.delete(currencyId, opened.session.accessToken);
-    if (!response.success) {
-      return { ok: false as const, message: response.message || "Request failed." };
-    }
-    return { ok: true as const, data: response.data ?? response.message };
-  } catch (error) {
-    return adminActionFailure(error);
-  }
+  return browserApi<string>(byId(currencyId), { method: "DELETE", allowEmptyData: true });
 }
 
 export async function activatePrivateCurrency(currencyId: string) {
-  return run((accessToken) => privateCurrenciesApi.activate(currencyId, accessToken));
+  return browserApi<Currency>(`${byId(currencyId)}/activate`, { method: "PATCH" });
 }
 
 export async function deactivatePrivateCurrency(currencyId: string) {
-  return run((accessToken) => privateCurrenciesApi.deactivate(currencyId, accessToken));
+  return browserApi<Currency>(`${byId(currencyId)}/deactivate`, { method: "PATCH" });
 }

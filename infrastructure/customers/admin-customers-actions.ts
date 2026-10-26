@@ -1,54 +1,55 @@
-"use server";
+"use client";
 
-import type { ApiResponse } from "@/core/auth/admin-api";
-import type { AdminCustomerFilterQuery, AdminCustomerListQuery } from "@/core/customers/admin-api";
-import { adminActionFailure, readActionSession } from "@/infrastructure/auth/admin-action";
-import { adminCustomersApi } from "@/infrastructure/customers/http-admin-customers-api";
+import type {
+  AdminCustomer,
+  AdminCustomerFilterQuery,
+  AdminCustomerListQuery,
+  PaginatedAdminCustomers,
+} from "@/core/customers/admin-api";
+import { browserApi, setQuery, withSearch } from "@/infrastructure/http/browser-api";
 
-export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; sessionExpired?: boolean };
-
-async function run<T>(
-  task: (accessToken: string) => Promise<ApiResponse<T>>,
-): Promise<ActionResult<T>> {
-  const opened = await readActionSession();
-  if (!opened.session) return opened.failure;
-
-  try {
-    return unwrap(await task(opened.session.accessToken));
-  } catch (error) {
-    return adminActionFailure(error);
-  }
-}
-
-function unwrap<T>(response: ApiResponse<T>): ActionResult<T> {
-  if (!response.success || response.data == null) {
-    return { ok: false, message: response.message || "Request failed." };
-  }
-  return { ok: true, data: response.data };
-}
+const list = "/api/v1/customer/private/admin";
+const byId = (customerId: string) =>
+  `/api/v1/customer/private/admin/${encodeURIComponent(customerId)}`;
 
 export async function listAdminCustomers(query: AdminCustomerListQuery) {
-  return run((accessToken) => adminCustomersApi.list(query, accessToken));
+  const search = new URLSearchParams({
+    page: String(query.page),
+    size: String(query.size),
+  });
+  setQuery(search, "searchParam", query.searchParam?.trim());
+  return browserApi<PaginatedAdminCustomers>(withSearch(list, search));
 }
 
 export async function filterAdminCustomers(query: AdminCustomerFilterQuery) {
-  return run((accessToken) => adminCustomersApi.filter(query, accessToken));
+  const search = new URLSearchParams({
+    page: String(query.page),
+    size: String(query.size),
+  });
+  setQuery(search, "searchParam", query.filter.searchParam?.trim());
+  setQuery(search, "active", query.filter.active);
+  setQuery(search, "verified", query.filter.verified);
+  setQuery(search, "gender", query.filter.gender);
+  setQuery(search, "marketingEmailsEnabled", query.filter.marketingEmailsEnabled);
+  setQuery(search, "registeredFrom", query.filter.registeredFrom);
+  setQuery(search, "registeredTo", query.filter.registeredTo);
+  return browserApi<PaginatedAdminCustomers>(withSearch(`${list}/filter`, search), {
+    method: "POST",
+  });
 }
 
 export async function getAdminCustomer(customerId: string) {
-  return run((accessToken) => adminCustomersApi.get(customerId, accessToken));
+  return browserApi<AdminCustomer>(byId(customerId));
 }
 
 export async function deleteAdminCustomer(customerId: string) {
-  return run((accessToken) => adminCustomersApi.delete(customerId, accessToken));
+  return browserApi<string>(byId(customerId), { method: "DELETE", allowEmptyData: true });
 }
 
 export async function deactivateAdminCustomer(customerId: string) {
-  return run((accessToken) => adminCustomersApi.deactivate(customerId, accessToken));
+  return browserApi<AdminCustomer>(`${byId(customerId)}/deactivate`, { method: "PATCH" });
 }
 
 export async function activateAdminCustomer(customerId: string) {
-  return run((accessToken) => adminCustomersApi.activate(customerId, accessToken));
+  return browserApi<AdminCustomer>(`${byId(customerId)}/activate`, { method: "PATCH" });
 }

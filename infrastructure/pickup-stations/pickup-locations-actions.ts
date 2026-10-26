@@ -1,74 +1,83 @@
-"use server";
+"use client";
 
-import type { ApiResponse } from "@/core/auth/admin-api";
 import type {
+  CreatePickupLocationRequest,
+  PaginatedPickupLocations,
+  PickupLocation,
   PickupLocationFilterQuery,
   PickupLocationListQuery,
-  CreatePickupLocationRequest,
+  PickupLocationStatistics,
   PickupLocationStatus,
   UpdatePickupLocationRequest,
 } from "@/core/pickup-stations/private-api";
-import { adminActionFailure, readActionSession } from "@/infrastructure/auth/admin-action";
-import { privatePickupLocationsApi } from "@/infrastructure/pickup-stations/http-pickup-locations-api";
+import { browserApi, setQuery, withSearch } from "@/infrastructure/http/browser-api";
 
-export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; sessionExpired?: boolean };
+const list = "/api/v1/pickup-locations/private";
+const byId = (locationId: string) =>
+  `/api/v1/pickup-locations/private/${encodeURIComponent(locationId)}`;
 
-async function run<T>(
-  task: (accessToken: string) => Promise<ApiResponse<T>>,
-): Promise<ActionResult<T>> {
-  const opened = await readActionSession();
-  if (!opened.session) return opened.failure;
-
-  try {
-    return unwrap(await task(opened.session.accessToken));
-  } catch (error) {
-    return adminActionFailure(error);
-  }
+function listSearch(query: PickupLocationListQuery) {
+  const search = new URLSearchParams({
+    page: String(query.page),
+    size: String(query.size),
+  });
+  setQuery(search, "searchParams", query.searchParams?.trim());
+  setQuery(search, "status", query.status);
+  return search;
 }
 
-function unwrap<T>(response: ApiResponse<T>): ActionResult<T> {
-  if (!response.success || response.data == null) {
-    return { ok: false, message: response.message || "Request failed." };
-  }
-  return { ok: true, data: response.data };
+function filterSearch(query: PickupLocationFilterQuery) {
+  const search = new URLSearchParams({
+    page: String(query.page),
+    size: String(query.size),
+  });
+  setQuery(search, "searchParam", query.filter.searchParam?.trim());
+  setQuery(search, "status", query.filter.status);
+  setQuery(search, "country", query.filter.country?.trim());
+  setQuery(search, "state", query.filter.state?.trim());
+  setQuery(search, "city", query.filter.city?.trim());
+  return search;
 }
 
 export async function listPrivatePickupLocations(query: PickupLocationListQuery) {
-  return run((accessToken) => privatePickupLocationsApi.list(query, accessToken));
+  return browserApi<PaginatedPickupLocations>(withSearch(list, listSearch(query)));
 }
 
 export async function filterPrivatePickupLocations(query: PickupLocationFilterQuery) {
-  return run((accessToken) => privatePickupLocationsApi.filter(query, accessToken));
+  return browserApi<PaginatedPickupLocations>(withSearch(`${list}/filter`, filterSearch(query)), {
+    method: "POST",
+  });
 }
 
 export async function getPrivatePickupLocation(locationId: string) {
-  return run((accessToken) => privatePickupLocationsApi.get(locationId, accessToken));
+  return browserApi<PickupLocation>(byId(locationId));
 }
 
 export async function createPrivatePickupLocation(request: CreatePickupLocationRequest) {
-  return run((accessToken) => privatePickupLocationsApi.create(request, accessToken));
+  return browserApi<PickupLocation>(list, { method: "POST", json: request });
 }
 
 export async function updatePrivatePickupLocation(
   locationId: string,
   request: UpdatePickupLocationRequest,
 ) {
-  return run((accessToken) => privatePickupLocationsApi.update(locationId, request, accessToken));
+  return browserApi<PickupLocation>(byId(locationId), { method: "PUT", json: request });
 }
 
 export async function updatePrivatePickupLocationStatus(
   locationId: string,
   status: PickupLocationStatus,
 ) {
-  return run((accessToken) => privatePickupLocationsApi.updateStatus(locationId, status, accessToken));
+  const search = new URLSearchParams({ status });
+  return browserApi<PickupLocation>(withSearch(`${byId(locationId)}/status`, search), {
+    method: "PATCH",
+  });
 }
 
 export async function deletePrivatePickupLocation(locationId: string) {
-  return run((accessToken) => privatePickupLocationsApi.delete(locationId, accessToken));
+  return browserApi<string>(byId(locationId), { method: "DELETE", allowEmptyData: true });
 }
 
 export async function getPrivatePickupLocationStatistics() {
-  return run((accessToken) => privatePickupLocationsApi.statistics(accessToken));
+  return browserApi<PickupLocationStatistics>(`${list}/statistics`);
 }

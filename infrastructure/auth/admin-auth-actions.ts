@@ -1,72 +1,68 @@
-"use server";
+"use client";
 
 import type {
+  AdminAccount,
   AdminCreateRequest,
   AdminForgotPasswordRequest,
+  AdminForgotPasswordResponse,
   AdminListQuery,
   AdminResetPasswordRequest,
   AdminUpdateRequest,
-  ApiResponse,
+  PaginatedAdmins,
 } from "@/core/auth/admin-api";
-import { adminAuthApi } from "@/infrastructure/auth/admin-auth-api";
-import { adminActionFailure, readActionSession } from "@/infrastructure/auth/admin-action";
+import { browserApi, setQuery, withSearch } from "@/infrastructure/http/browser-api";
 
-export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; sessionExpired?: boolean };
-
-async function run<T>(
-  task: (accessToken: string) => Promise<ApiResponse<T>>,
-): Promise<ActionResult<T>> {
-  const opened = await readActionSession();
-  if (!opened.session) return opened.failure;
-
-  try {
-    return unwrap(await task(opened.session.accessToken));
-  } catch (error) {
-    return adminActionFailure(error);
-  }
-}
-
-function unwrap<T>(response: ApiResponse<T>): ActionResult<T> {
-  if (!response.success) {
-    return { ok: false, message: response.message || "Request failed." };
-  }
-  return { ok: true, data: response.data };
-}
+const list = "/api/v1/admin/private";
+const byId = (adminId: string) => `/api/v1/admin/private/${encodeURIComponent(adminId)}`;
 
 export async function forgotAdminPassword(request: AdminForgotPasswordRequest) {
-  return adminAuthApi.forgotPassword(request);
+  return browserApi<AdminForgotPasswordResponse>("/api/v1/admin/auth/public/forgot-password", {
+    method: "POST",
+    json: request,
+  });
 }
 
 export async function resetAdminPassword(request: AdminResetPasswordRequest) {
-  return adminAuthApi.resetPassword(request);
+  return browserApi<string | null>("/api/v1/admin/auth/public/reset-password", {
+    method: "POST",
+    json: request,
+    allowEmptyData: true,
+  });
 }
 
 export async function createAdminAccount(request: AdminCreateRequest) {
-  return run((accessToken) => adminAuthApi.create(request, accessToken));
+  return browserApi<AdminAccount>("/api/v1/admin/private/create", {
+    method: "POST",
+    json: request,
+  });
 }
 
 export async function listAdminAccounts(query: AdminListQuery) {
-  return run((accessToken) => adminAuthApi.list(query, accessToken));
+  const search = new URLSearchParams({
+    page: String(query.page),
+    size: String(query.size),
+  });
+  setQuery(search, "search", query.search.trim());
+  setQuery(search, "active", query.active);
+  return browserApi<PaginatedAdmins>(withSearch(list, search));
 }
 
 export async function getAdminAccount(adminId: string) {
-  return run((accessToken) => adminAuthApi.get(adminId, accessToken));
+  return browserApi<AdminAccount>(byId(adminId));
 }
 
 export async function updateAdminAccount(adminId: string, request: AdminUpdateRequest) {
-  return run((accessToken) => adminAuthApi.update(adminId, request, accessToken));
+  return browserApi<AdminAccount>(byId(adminId), { method: "PUT", json: request });
 }
 
 export async function deactivateAdminAccount(adminId: string) {
-  return run((accessToken) => adminAuthApi.deactivate(adminId, accessToken));
+  return browserApi<AdminAccount>(`${byId(adminId)}/deactivate`, { method: "PATCH" });
 }
 
 export async function activateAdminAccount(adminId: string) {
-  return run((accessToken) => adminAuthApi.activate(adminId, accessToken));
+  return browserApi<AdminAccount>(`${byId(adminId)}/activate`, { method: "PATCH" });
 }
 
 export async function deleteAdminAccount(adminId: string) {
-  return run((accessToken) => adminAuthApi.delete(adminId, accessToken));
+  return browserApi<string>(byId(adminId), { method: "DELETE", allowEmptyData: true });
 }

@@ -1,51 +1,49 @@
-"use server";
+"use client";
 
-import type { ApiResponse } from "@/core/auth/admin-api";
 import type {
   DeleteFileRequest,
   DeleteFilesRequest,
   UploadFileRequest,
   UploadFilesRequest,
+  UploadedFile,
 } from "@/core/files/private-api";
-import { adminActionFailure, readActionSession } from "@/infrastructure/auth/admin-action";
-import { privateFilesApi } from "@/infrastructure/files/http-files-api";
+import { browserApi } from "@/infrastructure/http/browser-api";
 
-export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; sessionExpired?: boolean };
-
-async function run<T>(
-  task: (accessToken: string) => Promise<ApiResponse<T>>,
-): Promise<ActionResult<T>> {
-  const opened = await readActionSession();
-  if (!opened.session) return opened.failure;
-
-  try {
-    return unwrap(await task(opened.session.accessToken));
-  } catch (error) {
-    return adminActionFailure(error);
-  }
-}
-
-function unwrap<T>(response: ApiResponse<T>): ActionResult<T> {
-  if (!response.success || response.data == null) {
-    return { ok: false, message: response.message || "Request failed." };
-  }
-  return { ok: true, data: response.data };
+function withCategory(path: string, category?: UploadFileRequest["category"]) {
+  if (!category) return path;
+  return `${path}?${new URLSearchParams({ category }).toString()}`;
 }
 
 export async function uploadPrivateFile(request: UploadFileRequest) {
-  return run((accessToken) => privateFilesApi.upload(request, accessToken));
+  const body = new FormData();
+  body.append("file", request.file);
+  return browserApi<UploadedFile>(withCategory("/api/v1/file/private/upload", request.category), {
+    method: "POST",
+    body,
+  });
 }
 
 export async function uploadPrivateFiles(request: UploadFilesRequest) {
-  return run((accessToken) => privateFilesApi.uploadBulk(request, accessToken));
+  const body = new FormData();
+  for (const file of request.files) body.append("files", file);
+  return browserApi<UploadedFile[]>(
+    withCategory("/api/v1/file/private/upload/bulk", request.category),
+    { method: "POST", body },
+  );
 }
 
 export async function deletePrivateFile(request: DeleteFileRequest) {
-  return run((accessToken) => privateFilesApi.deleteAsync(request, accessToken));
+  return browserApi<string>("/api/v1/file/private/delete/async", {
+    method: "POST",
+    json: request,
+    allowEmptyData: true,
+  });
 }
 
 export async function deletePrivateFiles(request: DeleteFilesRequest) {
-  return run((accessToken) => privateFilesApi.deleteAsyncBulk(request, accessToken));
+  return browserApi<string>("/api/v1/file/private/delete/async/bulk", {
+    method: "POST",
+    json: request,
+    allowEmptyData: true,
+  });
 }

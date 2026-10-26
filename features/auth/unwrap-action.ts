@@ -6,6 +6,7 @@ export type ActionResult<T> =
 
 export async function unwrapAction<T>(result: ActionResult<T>): Promise<T> {
   if (!result.ok) {
+    console.error("[api]", result.message);
     if (result.sessionExpired) {
       window.location.assign("/admin/login");
       return new Promise(() => {});

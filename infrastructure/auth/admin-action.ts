@@ -40,5 +40,8 @@ export async function adminActionFailure(error: unknown) {
   }
 
   if (error instanceof ApiError) return { ok: false as const, message: error.message };
+  if (error instanceof Error && error.message) {
+    return { ok: false as const, message: error.message };
+  }
   return { ok: false as const, message: "Request failed." };
 }

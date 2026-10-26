@@ -25,10 +25,12 @@ export async function loginAdmin(
     if (result) {
       return result;
     }
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to sign in right now.";
+    console.error("[api] POST /api/v1/admin/public/login", message);
     return {
       fieldErrors: {},
-      message: "Unable to sign in right now.",
+      message,
     };
   }
 
