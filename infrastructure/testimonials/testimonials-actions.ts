@@ -1,64 +1,42 @@
-"use server";
+"use client";
 
-import type { ApiResponse } from "@/core/auth/admin-api";
-import type { TestimonialListQuery, TestimonialWriteRequest } from "@/core/testimonials/private-api";
-import { adminActionFailure, readActionSession } from "@/infrastructure/auth/admin-action";
-import { privateTestimonialsApi } from "@/infrastructure/testimonials/http-testimonials-api";
+import type {
+  PaginatedTestimonials,
+  PrivateTestimonial,
+  TestimonialListQuery,
+  TestimonialWriteRequest,
+} from "@/core/testimonials/private-api";
+import { browserApi, withSearch } from "@/infrastructure/http/browser-api";
 
-export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; sessionExpired?: boolean };
-
-async function run<T>(
-  task: (accessToken: string) => Promise<ApiResponse<T>>,
-): Promise<ActionResult<T>> {
-  const opened = await readActionSession();
-  if (!opened.session) return opened.failure;
-
-  try {
-    return unwrap(await task(opened.session.accessToken));
-  } catch (error) {
-    return adminActionFailure(error);
-  }
-}
-
-function unwrap<T>(response: ApiResponse<T>): ActionResult<T> {
-  if (!response.success || response.data == null) {
-    return { ok: false, message: response.message || "Request failed." };
-  }
-  return { ok: true, data: response.data };
-}
+const list = "/api/v1/testimonials/private";
+const byId = (testimonialId: string) =>
+  `/api/v1/testimonials/private/${encodeURIComponent(testimonialId)}`;
 
 export async function listPrivateTestimonials(query: TestimonialListQuery) {
-  return run((accessToken) => privateTestimonialsApi.list(query, accessToken));
+  const search = new URLSearchParams({
+    page: String(query.page),
+    size: String(query.size),
+  });
+  const searchParam = query.searchParam?.trim();
+  if (searchParam) search.set("searchParam", searchParam);
+  return browserApi<PaginatedTestimonials>(withSearch(list, search));
 }
 
 export async function createPrivateTestimonial(request: TestimonialWriteRequest) {
-  return run((accessToken) => privateTestimonialsApi.create(request, accessToken));
+  return browserApi<PrivateTestimonial>(list, { method: "POST", json: request });
 }
 
 export async function getPrivateTestimonial(testimonialId: string) {
-  return run((accessToken) => privateTestimonialsApi.get(testimonialId, accessToken));
+  return browserApi<PrivateTestimonial>(byId(testimonialId));
 }
 
 export async function updatePrivateTestimonial(
   testimonialId: string,
   request: TestimonialWriteRequest,
 ) {
-  return run((accessToken) => privateTestimonialsApi.update(testimonialId, request, accessToken));
+  return browserApi<PrivateTestimonial>(byId(testimonialId), { method: "PUT", json: request });
 }
 
 export async function deletePrivateTestimonial(testimonialId: string) {
-  const opened = await readActionSession();
-  if (!opened.session) return opened.failure;
-
-  try {
-    const response = await privateTestimonialsApi.delete(testimonialId, opened.session.accessToken);
-    if (!response.success) {
-      return { ok: false as const, message: response.message || "Request failed." };
-    }
-    return { ok: true as const, data: response.data ?? response.message };
-  } catch (error) {
-    return adminActionFailure(error);
-  }
+  return browserApi<string>(byId(testimonialId), { method: "DELETE", allowEmptyData: true });
 }

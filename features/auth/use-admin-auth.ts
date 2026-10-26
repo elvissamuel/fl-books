@@ -23,13 +23,15 @@ import { unwrapAction } from "@/features/auth/unwrap-action";
 
 export function useForgotAdminPassword() {
   return useMutation({
-    mutationFn: (request: AdminForgotPasswordRequest) => forgotAdminPassword(request),
+    mutationFn: async (request: AdminForgotPasswordRequest) =>
+      unwrapAction(await forgotAdminPassword(request)),
   });
 }
 
 export function useResetAdminPassword() {
   return useMutation({
-    mutationFn: (request: AdminResetPasswordRequest) => resetAdminPassword(request),
+    mutationFn: async (request: AdminResetPasswordRequest) =>
+      unwrapAction(await resetAdminPassword(request)),
   });
 }
 

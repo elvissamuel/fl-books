@@ -1,50 +1,53 @@
-"use server";
+"use client";
 
-import type { ApiResponse } from "@/core/auth/admin-api";
-import type { BookListQuery, CreateBookRequest, UpdateBookRequest } from "@/core/books/private-api";
-import { adminActionFailure, readActionSession } from "@/infrastructure/auth/admin-action";
-import { privateBooksApi } from "@/infrastructure/books/http-books-api";
+import type {
+  BookListQuery,
+  CatalogBook,
+  CreateBookRequest,
+  PaginatedBooks,
+  UpdateBookRequest,
+} from "@/core/books/private-api";
+import { browserApi, setQuery, withSearch } from "@/infrastructure/http/browser-api";
 
-export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; message: string; sessionExpired?: boolean };
+const list = "/api/v1/books/private";
+const byId = (bookId: string) => `/api/v1/books/private/${encodeURIComponent(bookId)}`;
 
-async function run<T>(
-  task: (accessToken: string) => Promise<ApiResponse<T>>,
-): Promise<ActionResult<T>> {
-  const opened = await readActionSession();
-  if (!opened.session) return opened.failure;
-
-  try {
-    return unwrap(await task(opened.session.accessToken));
-  } catch (error) {
-    return adminActionFailure(error);
-  }
-}
-
-function unwrap<T>(response: ApiResponse<T>): ActionResult<T> {
-  if (!response.success || response.data == null) {
-    return { ok: false, message: response.message || "Request failed." };
-  }
-  return { ok: true, data: response.data };
+function listSearch(query: BookListQuery) {
+  const search = new URLSearchParams({
+    page: String(query.page),
+    size: String(query.size),
+  });
+  setQuery(search, "search", query.search?.trim());
+  setQuery(search, "active", query.active);
+  setQuery(search, "status", query.status);
+  setQuery(search, "minStock", query.minStock);
+  setQuery(search, "maxStock", query.maxStock);
+  setQuery(search, "minPrice", query.minPrice);
+  setQuery(search, "maxPrice", query.maxPrice);
+  setQuery(search, "minWeightInGrams", query.minWeightInGrams);
+  setQuery(search, "maxWeightInGrams", query.maxWeightInGrams);
+  setQuery(search, "categoryId", query.categoryId?.trim());
+  setQuery(search, "sortBy", query.sortBy?.trim());
+  setQuery(search, "direction", query.direction?.trim());
+  return search;
 }
 
 export async function listPrivateBooks(query: BookListQuery) {
-  return run((accessToken) => privateBooksApi.list(query, accessToken));
+  return browserApi<PaginatedBooks>(withSearch(list, listSearch(query)));
 }
 
 export async function createPrivateBook(request: CreateBookRequest) {
-  return run((accessToken) => privateBooksApi.create(request, accessToken));
+  return browserApi<CatalogBook>(list, { method: "POST", json: request });
 }
 
 export async function getPrivateBook(bookId: string) {
-  return run((accessToken) => privateBooksApi.get(bookId, accessToken));
+  return browserApi<CatalogBook>(byId(bookId));
 }
 
 export async function updatePrivateBook(bookId: string, request: UpdateBookRequest) {
-  return run((accessToken) => privateBooksApi.update(bookId, request, accessToken));
+  return browserApi<CatalogBook>(byId(bookId), { method: "PATCH", json: request });
 }
 
 export async function deletePrivateBook(bookId: string) {
-  return run((accessToken) => privateBooksApi.delete(bookId, accessToken));
+  return browserApi<string>(byId(bookId), { method: "DELETE", allowEmptyData: true });
 }
