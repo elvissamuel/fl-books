@@ -3,12 +3,12 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import type {
+  PickupLocation,
   PickupLocationStatus,
   UpdatePickupLocationRequest,
 } from "@/core/pickup-stations/private-api";
 import {
   useCreatePrivatePickupLocation,
-  usePrivatePickupLocation,
   useUpdatePrivatePickupLocation,
 } from "@/features/pickup-stations/use-pickup-stations";
 
@@ -16,31 +16,30 @@ const controlClass =
   "h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 export function PickupLocationDialog({
-  locationId = "",
+  location,
   onClose,
   onSaved,
 }: {
-  locationId?: string;
+  location?: PickupLocation;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
-  const editing = locationId.length > 0;
-  const location = usePrivatePickupLocation(locationId);
+  const editing = Boolean(location);
   const createLocation = useCreatePrivatePickupLocation();
   const updateLocation = useUpdatePrivatePickupLocation();
   const pending = createLocation.isPending || updateLocation.isPending;
   const [formError, setFormError] = useState("");
-  const [locationName, setLocationName] = useState("");
-  const [fullAddress, setFullAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [stateName, setStateName] = useState("");
-  const [country, setCountry] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [emailAddress, setEmailAddress] = useState("");
-  const [status, setStatus] = useState<PickupLocationStatus>("ACTIVE");
+  const [locationName, setLocationName] = useState(location?.locationName ?? "");
+  const [fullAddress, setFullAddress] = useState(location?.fullAddress ?? "");
+  const [city, setCity] = useState(location?.city ?? "");
+  const [stateName, setStateName] = useState(location?.state ?? "");
+  const [country, setCountry] = useState(location?.country ?? "");
+  const [contactName, setContactName] = useState(location?.contactName ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(location?.phoneNumber ?? "");
+  const [emailAddress, setEmailAddress] = useState(location?.emailAddress ?? "");
+  const [status, setStatus] = useState<PickupLocationStatus>(location?.status ?? "ACTIVE");
 
   useEffect(() => {
     dialogRef.current?.focus();
@@ -58,20 +57,6 @@ export function PickupLocationDialog({
     };
   }, [onClose]);
 
-  useEffect(() => {
-    const current = location.data;
-    if (!current) return;
-    setLocationName(current.locationName);
-    setFullAddress(current.fullAddress);
-    setCity(current.city);
-    setStateName(current.state);
-    setCountry(current.country);
-    setContactName(current.contactName);
-    setPhoneNumber(current.phoneNumber);
-    setEmailAddress(current.emailAddress);
-    setStatus(current.status);
-  }, [location.data]);
-
   function saveLocation() {
     const request = buildRequest();
     if (typeof request === "string") {
@@ -83,8 +68,8 @@ export function PickupLocationDialog({
       onSuccess: onSaved,
       onError: (error: Error) => setFormError(error.message),
     };
-    if (editing) {
-      updateLocation.mutate({ locationId, request }, options);
+    if (editing && location) {
+      updateLocation.mutate({ locationId: location.id, request }, options);
       return;
     }
     createLocation.mutate(request, options);
@@ -146,12 +131,6 @@ export function PickupLocationDialog({
             saveLocation();
           }}
         >
-          {editing && location.isLoading ? (
-            <p className="text-sm text-neutral-500">Loading location…</p>
-          ) : null}
-          {editing && location.error instanceof Error ? (
-            <p className="text-sm text-danger">{location.error.message}</p>
-          ) : null}
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
           <Field id="location-name" label="Location name">
             <input id="location-name" value={locationName} onChange={(event) => setLocationName(event.target.value)} className={controlClass} />
@@ -196,7 +175,7 @@ export function PickupLocationDialog({
           </div>
           <button
             type="submit"
-            disabled={pending || (editing && location.isLoading)}
+            disabled={pending}
             className="h-12 w-full rounded-xl bg-brand text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
           >
             {pending ? "Saving…" : "Save Location"}

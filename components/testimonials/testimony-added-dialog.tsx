@@ -4,7 +4,15 @@ import { useEffect, useId, useRef } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function TestimonyAddedDialog({ onDone }: { onDone: () => void }) {
+export function TestimonyAddedDialog({
+  onDone,
+  title = "Testimony Added Successfully",
+  description = "You have successfully added a testimony.",
+}: {
+  onDone: () => void;
+  title?: string;
+  description?: string;
+}) {
   const titleId = useId();
   const descriptionId = useId();
   const dialogRef = useRef<HTMLElement>(null);
@@ -41,10 +49,10 @@ export function TestimonyAddedDialog({ onDone }: { onDone: () => void }) {
           <Check className="size-7 text-white" strokeWidth={2.75} />
         </div>
         <h2 id={titleId} className="mt-5 text-[17px] font-bold tracking-tight text-neutral-950">
-          Testimony Added Successfully
+          {title}
         </h2>
         <p id={descriptionId} className="mx-auto mt-2 max-w-[210px] text-sm leading-5 text-[#8d97ab]">
-          You have successfully added a testimony.
+          {description}
         </p>
         <Button
           type="button"

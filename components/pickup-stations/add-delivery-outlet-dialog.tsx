@@ -4,10 +4,12 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { CountryFlag } from "@/components/dashboard/country-flag";
 import type { ShippingCountry } from "@/core/dashboard/types";
-import type { DeliveryOutletWriteRequest } from "@/core/pickup-stations/delivery-outlet-api";
+import type {
+  DeliveryOutletWriteRequest,
+  PrivateDeliveryOutlet,
+} from "@/core/pickup-stations/delivery-outlet-api";
 import {
   useCreatePrivateDeliveryOutlet,
-  usePrivateDeliveryOutlet,
   useUpdatePrivateDeliveryOutlet,
 } from "@/features/pickup-stations/use-pickup-stations";
 import { cn } from "@/lib/utils";
@@ -43,34 +45,45 @@ function formatDecimal(value: number) {
   return `${whole.padStart(2, "0")}.${fraction}`;
 }
 
+function rangesFromOutlet(outlet?: PrivateDeliveryOutlet): WeightRange[] {
+  if (!outlet || outlet.weightPrices.length === 0) return [blankRange("1")];
+  return outlet.weightPrices.map((range, index) => ({
+    id: String(index + 1),
+    minKg: formatDecimal(range.minKg),
+    maxKg: formatDecimal(range.maxKg),
+    price: formatDecimal(range.price),
+  }));
+}
+
 export function AddDeliveryOutletDialog({
-  outletId = "",
+  outlet,
   onClose,
   onSaved,
 }: {
-  outletId?: string;
+  outlet?: PrivateDeliveryOutlet;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
-  const nextRangeId = useRef(2);
-  const editing = outletId.length > 0;
-  const loadedOutlet = usePrivateDeliveryOutlet(outletId);
+  const nextRangeId = useRef(Math.max((outlet?.weightPrices.length ?? 0) + 1, 2));
+  const editing = Boolean(outlet);
   const createOutlet = useCreatePrivateDeliveryOutlet();
   const updateOutlet = useUpdatePrivateDeliveryOutlet();
   const pending = createOutlet.isPending || updateOutlet.isPending;
   const [formError, setFormError] = useState("");
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [stateName, setStateName] = useState("");
-  const [country, setCountry] = useState("Nigeria");
-  const [contactName, setContactName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<(typeof statuses)[number]>("Active");
-  const [ranges, setRanges] = useState<WeightRange[]>(() => [blankRange("1")]);
+  const [name, setName] = useState(outlet?.outletName ?? "");
+  const [address, setAddress] = useState(outlet?.fullAddress ?? "");
+  const [city, setCity] = useState(outlet?.city ?? "");
+  const [stateName, setStateName] = useState(outlet?.state ?? "");
+  const [country, setCountry] = useState(outlet?.country ?? "Nigeria");
+  const [contactName, setContactName] = useState(outlet?.contactName ?? "");
+  const [phone, setPhone] = useState(outlet?.phoneNumber ?? "");
+  const [email, setEmail] = useState(outlet?.emailAddress ?? "");
+  const [status, setStatus] = useState<(typeof statuses)[number]>(
+    outlet?.status === "INACTIVE" ? "Inactive" : "Active",
+  );
+  const [ranges, setRanges] = useState<WeightRange[]>(() => rangesFromOutlet(outlet));
   const [openMenu, setOpenMenu] = useState<"country" | "status" | null>(null);
 
   useEffect(() => {
@@ -88,31 +101,6 @@ export function AddDeliveryOutletDialog({
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [onClose]);
-
-  useEffect(() => {
-    const outlet = loadedOutlet.data;
-    if (!outlet) return;
-    setName(outlet.outletName);
-    setAddress(outlet.fullAddress);
-    setCity(outlet.city);
-    setStateName(outlet.state);
-    setCountry(outlet.country);
-    setContactName(outlet.contactName);
-    setPhone(outlet.phoneNumber);
-    setEmail(outlet.emailAddress);
-    setStatus(outlet.status === "ACTIVE" ? "Active" : "Inactive");
-    setRanges(
-      outlet.weightPrices.length > 0
-        ? outlet.weightPrices.map((range, index) => ({
-            id: String(index + 1),
-            minKg: formatDecimal(range.minKg),
-            maxKg: formatDecimal(range.maxKg),
-            price: formatDecimal(range.price),
-          }))
-        : [blankRange("1")],
-    );
-    nextRangeId.current = Math.max(outlet.weightPrices.length + 1, 2);
-  }, [loadedOutlet.data]);
 
   function updateRange(id: string, field: keyof Omit<WeightRange, "id">, value: string) {
     setRanges((current) =>
@@ -164,8 +152,8 @@ export function AddDeliveryOutletDialog({
       onSuccess: onSaved,
       onError: (error: Error) => setFormError(error.message),
     };
-    if (editing) {
-      updateOutlet.mutate({ outletId, request }, options);
+    if (editing && outlet) {
+      updateOutlet.mutate({ outletId: outlet.id, request }, options);
       return;
     }
     createOutlet.mutate(request, options);
@@ -208,12 +196,6 @@ export function AddDeliveryOutletDialog({
             saveOutlet();
           }}
         >
-          {editing && loadedOutlet.isLoading ? (
-            <p className="text-sm text-neutral-500">Loading outlet…</p>
-          ) : null}
-          {loadedOutlet.error instanceof Error ? (
-            <p className="text-sm text-danger">{loadedOutlet.error.message}</p>
-          ) : null}
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
           <Field id="outlet-name" label="Delivery Outlet Name">
             <input
@@ -427,7 +409,7 @@ export function AddDeliveryOutletDialog({
 
           <button
             type="submit"
-            disabled={pending || (editing && loadedOutlet.isLoading)}
+            disabled={pending}
             className="h-12 w-full rounded-xl bg-brand text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
           >
             Save Location

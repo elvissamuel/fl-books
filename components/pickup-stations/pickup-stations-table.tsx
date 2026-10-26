@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { CircleCheck, CircleOff, Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { CountryFlag } from "@/components/dashboard/country-flag";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -124,17 +124,22 @@ export function PickupStationsTable({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onView(station)}>View location</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => onView(station)}>
+                        <Eye className="size-4" />
+                        View location
+                      </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => onEdit(station)}>
                         <Pencil className="size-4" />
                         Edit
                       </DropdownMenuItem>
                       {station.status === "ACTIVE" ? (
                         <DropdownMenuItem onSelect={() => onDeactivate(station)}>
+                          <CircleOff className="size-4" />
                           Deactivate
                         </DropdownMenuItem>
                       ) : (
                         <DropdownMenuItem onSelect={() => onActivate(station)}>
+                          <CircleCheck className="size-4" />
                           Activate
                         </DropdownMenuItem>
                       )}

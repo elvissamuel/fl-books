@@ -3,36 +3,42 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { Plus, X } from "lucide-react";
-import { useCreateTestimonial } from "@/features/testimonials/use-testimonials";
+import { useUploadPrivateFile } from "@/features/files/use-files";
+import type { PrivateTestimonial } from "@/core/testimonials/private-api";
+import {
+  useCreatePrivateTestimonial,
+  useUpdatePrivateTestimonial,
+} from "@/features/testimonials/use-testimonials";
 
 const controlClass =
   "w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-brand focus:ring-2 focus:ring-brand/15";
 
-function readPhoto(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
-
 export function AddTestimonyPanel({
+  mode,
+  testimonial,
   onClose,
   onSaved,
 }: {
+  mode: "create" | "edit";
+  testimonial?: PrivateTestimonial;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const createTestimonial = useCreateTestimonial();
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const [message, setMessage] = useState("");
+  const createTestimonial = useCreatePrivateTestimonial();
+  const updateTestimonial = useUpdatePrivateTestimonial();
+  const uploadPhoto = useUploadPrivateFile();
+  const [name, setName] = useState(testimonial?.name ?? "");
+  const [role, setRole] = useState(testimonial?.role ?? "");
+  const [message, setMessage] = useState(testimonial?.message ?? "");
+  const [imageUrl, setImageUrl] = useState(testimonial?.imageUrl ?? "");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [formError, setFormError] = useState("");
+  const pending =
+    createTestimonial.isPending || updateTestimonial.isPending || uploadPhoto.isPending;
 
   useEffect(() => {
     panelRef.current?.focus();
@@ -61,6 +67,37 @@ export function AddTestimonyPanel({
     return () => URL.revokeObjectURL(preview);
   }, [photo]);
 
+  async function saveTestimony() {
+    setFormError("");
+    try {
+      let nextImageUrl = imageUrl;
+      if (photo) {
+        const uploaded = await uploadPhoto.mutateAsync({
+          category: "PROFILE_PICTURE",
+          file: photo,
+        });
+        if (!uploaded.fileUrl) throw new Error("Photo upload did not return a file URL.");
+        nextImageUrl = uploaded.fileUrl;
+      }
+
+      const request = {
+        name: name.trim(),
+        role: role.trim(),
+        message: message.trim(),
+        imageUrl: nextImageUrl,
+      };
+
+      if (mode === "edit" && testimonial) {
+        await updateTestimonial.mutateAsync({ testimonialId: testimonial.id, request });
+      } else {
+        await createTestimonial.mutateAsync(request);
+      }
+      onSaved();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Request failed.");
+    }
+  }
+
   return (
     <div className="fixed inset-y-0 right-0 left-0 z-40 md:left-[232px]">
       <button
@@ -79,7 +116,7 @@ export function AddTestimonyPanel({
       >
         <div className="flex items-center justify-between px-6 pt-5 pb-1">
           <h2 id={titleId} className="text-lg font-semibold tracking-tight text-neutral-950">
-            Add Testimony
+            {mode === "create" ? "Add Testimony" : "Edit Testimony"}
           </h2>
           <button
             type="button"
@@ -95,24 +132,24 @@ export function AddTestimonyPanel({
           className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 pt-4 pb-8"
           onSubmit={(event) => {
             event.preventDefault();
-            const selected = photo;
-            void (async () => {
-              const photoDataUrl = selected ? await readPhoto(selected) : null;
-              createTestimonial.mutate(
-                { name, role, message, photoDataUrl },
-                { onSuccess: onSaved },
-              );
-            })();
+            void saveTestimony();
           }}
         >
+          {formError ? <p className="text-sm text-danger">{formError}</p> : null}
           <div className="flex items-stretch gap-4">
             <button
               type="button"
               onClick={() => photoInputRef.current?.click()}
               className="relative flex w-[118px] shrink-0 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-xl bg-[#f4f5f6] text-neutral-400"
             >
-              {photoPreview ? (
-                <Image src={photoPreview} alt="" fill unoptimized className="object-cover" />
+              {photoPreview || imageUrl ? (
+                <Image
+                  src={photoPreview ?? imageUrl}
+                  alt=""
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
               ) : (
                 <>
                   <Plus className="size-4" strokeWidth={1.75} />
@@ -168,10 +205,10 @@ export function AddTestimonyPanel({
 
           <button
             type="submit"
-            disabled={createTestimonial.isPending}
+            disabled={pending}
             className="h-12 w-full rounded-xl bg-brand text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
           >
-            Add Testimonial
+            {pending ? "Saving…" : mode === "create" ? "Add Testimonial" : "Save changes"}
           </button>
         </form>
       </section>
