@@ -4,17 +4,15 @@ import { cookies } from "next/headers";
 import type { AdminSessionStore } from "@/core/auth/admin-session-store";
 import {
   ADMIN_SESSION_COOKIE,
+  adminSessionCookieBase,
   adminSessionExpiry,
   encryptAdminSession,
 } from "@/infrastructure/auth/session-token";
 
 function sessionCookieOptions(expires: Date) {
   return {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    ...adminSessionCookieBase(),
     expires,
-    path: "/",
   };
 }
 
@@ -29,6 +27,10 @@ export const cookieSessionStore: AdminSessionStore = {
 
   async destroy() {
     const cookieStore = await cookies();
-    cookieStore.delete(ADMIN_SESSION_COOKIE);
+    cookieStore.set(ADMIN_SESSION_COOKIE, "", {
+      ...adminSessionCookieBase(),
+      expires: new Date(0),
+      maxAge: 0,
+    });
   },
 };

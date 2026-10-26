@@ -63,3 +63,28 @@ export async function decryptAdminSession(
 export function adminSessionExpiry() {
   return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 }
+
+export function adminSessionCookieBase() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+  };
+}
+
+export function accessTokenExpired(accessToken: string) {
+  const payload = accessToken.split(".")[1];
+  if (!payload) return false;
+
+  try {
+    const padded = payload
+      .replace(/-/g, "+")
+      .replace(/_/g, "/")
+      .padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    const decoded = JSON.parse(atob(padded)) as { exp?: unknown };
+    return typeof decoded.exp === "number" && decoded.exp * 1000 <= Date.now();
+  } catch {
+    return false;
+  }
+}

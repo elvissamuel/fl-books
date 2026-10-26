@@ -1,35 +1,32 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
-import { ArrowLeft, Mail, MapPin, Phone, ShoppingBag, Wallet } from "lucide-react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
+import { ArrowLeft, Mail, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { formatNaira } from "@/core/dashboard/format";
-import type { CustomerPurchaseStatus, CustomerStatus } from "@/core/customers/types";
-import { useCustomerDetail } from "@/features/customers/use-customers";
+import type { AdminCustomer } from "@/core/customers/admin-api";
+import { useAdminCustomer } from "@/features/customers/use-admin-customers";
 import { cn } from "@/lib/utils";
 
-const customerStatusStyles: Record<CustomerStatus, string> = {
-  active: "border-[#b7e4c7] bg-[#f3fbf6] text-[#3caf6e]",
-  inactive: "border-neutral-200 bg-[#f7f7f8] text-neutral-400",
-};
+function displayName(customer: AdminCustomer) {
+  const name = [customer.firstName, customer.lastName].filter(Boolean).join(" ").trim();
+  return name || customer.emailAddress;
+}
 
-const purchaseStatusStyles: Record<CustomerPurchaseStatus, string> = {
-  shipped: "border-[#e6d3a1] bg-[#fbf8f1] text-[#c6a15a]",
-  delivered: "border-[#b7e4c7] bg-[#f3fbf6] text-[#3caf6e]",
-};
+function initials(customer: AdminCustomer) {
+  const parts = [customer.firstName, customer.lastName].filter((part): part is string => Boolean(part));
+  if (parts.length === 0) return customer.emailAddress.slice(0, 2).toUpperCase();
+  return parts
+    .map((part) => part.slice(0, 1))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
-const purchaseStatusLabels: Record<CustomerPurchaseStatus, string> = {
-  shipped: "Shipped",
-  delivered: "Delivered",
-};
+function genderLabel(customer: AdminCustomer) {
+  if (customer.gender === "MALE") return "Male";
+  if (customer.gender === "FEMALE") return "Female";
+  return "—";
+}
 
 export function CustomerViewPanel({
   customerId,
@@ -40,7 +37,7 @@ export function CustomerViewPanel({
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLElement>(null);
-  const { data } = useCustomerDetail(customerId);
+  const customer = useAdminCustomer(customerId);
 
   useEffect(() => {
     panelRef.current?.focus();
@@ -53,7 +50,7 @@ export function CustomerViewPanel({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  if (!data) return null;
+  const profile = customer.data;
 
   return (
     <div className="fixed inset-y-0 right-0 left-0 z-40 md:left-[232px]">
@@ -83,110 +80,88 @@ export function CustomerViewPanel({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-4 pb-5">
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-medium text-neutral-500">
-              {data.initials}
-            </span>
-            <div className="min-w-0">
-              <h2 id={titleId} className="text-lg font-semibold tracking-tight text-neutral-950">
-                {data.name}
-              </h2>
-              <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="size-3.5" strokeWidth={1.75} />
-                  {data.location}
+          {customer.isLoading ? <p className="text-sm text-neutral-500">Loading customer…</p> : null}
+          {customer.error instanceof Error ? (
+            <p className="text-sm text-danger">{customer.error.message}</p>
+          ) : null}
+          {profile ? (
+            <>
+              <div className="flex items-center gap-3">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-medium text-neutral-500">
+                  {initials(profile)}
                 </span>
-                <span className="inline-flex items-center gap-1">
-                  <Phone className="size-3.5" strokeWidth={1.75} />
-                  {data.phone}
-                </span>
-              </p>
-            </div>
-          </div>
+                <div className="min-w-0">
+                  <h2 id={titleId} className="text-lg font-semibold tracking-tight text-neutral-950">
+                    {displayName(profile)}
+                  </h2>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
+                    <span>{profile.customerNumber}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="size-3.5" strokeWidth={1.75} />
+                      {profile.phoneNumber || "—"}
+                    </span>
+                  </p>
+                </div>
+              </div>
 
-          <section className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border border-neutral-200 px-4 py-4">
-            <div className="flex gap-2.5">
-              <Mail className="mt-0.5 size-4 shrink-0 text-neutral-400" strokeWidth={1.75} />
-              <div className="min-w-0">
-                <p className="text-xs text-neutral-400">Email Address</p>
-                <p className="mt-0.5 truncate text-sm text-neutral-800">{data.email}</p>
-              </div>
-            </div>
-            <div className="flex gap-2.5">
-              <ShoppingBag className="mt-0.5 size-4 shrink-0 text-neutral-400" strokeWidth={1.75} />
-              <div>
-                <p className="text-xs text-neutral-400">Total orders</p>
-                <p className="mt-0.5 text-sm text-neutral-800">{data.totalOrders}</p>
-              </div>
-            </div>
-            <div className="flex gap-2.5">
-              <Wallet className="mt-0.5 size-4 shrink-0 text-neutral-400" strokeWidth={1.75} />
-              <div>
-                <p className="text-xs text-neutral-400">Total Spent</p>
-                <p className="mt-0.5 text-sm font-medium text-neutral-900">
-                  {formatNaira(data.totalSpent)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "h-6 rounded-full px-2.5 text-xs font-medium",
-                  customerStatusStyles[data.status],
-                )}
-              >
-                {data.status === "active" ? "Active" : "Inactive"}
-              </Badge>
-            </div>
-          </section>
-
-          <div className="mt-4 overflow-hidden rounded-xl border border-neutral-200">
-            <Table>
-              <TableHeader className="bg-[#f7f7f8]">
-                <TableRow className="border-neutral-100 hover:bg-transparent">
-                  {["Item code", "Name", "Quantity", "Status"].map((heading, index) => (
-                    <TableHead
-                      key={heading}
-                      className={cn(
-                        "h-10 text-xs font-medium text-neutral-500",
-                        index === 0 && "pl-4",
-                        index === 3 && "pr-4",
-                      )}
-                    >
-                      {heading}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.purchases.map((purchase) => (
-                  <TableRow key={purchase.id} className="border-neutral-100 hover:bg-transparent">
-                    <TableCell className="py-3.5 pl-4 text-sm text-neutral-700">
-                      {purchase.itemCode}
-                    </TableCell>
-                    <TableCell className="py-3.5 text-sm text-neutral-700">{purchase.name}</TableCell>
-                    <TableCell className="py-3.5 text-sm text-neutral-700 tabular-nums">
-                      {purchase.quantity}
-                    </TableCell>
-                    <TableCell className="py-3.5 pr-4">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "h-6 rounded-full px-2.5 text-xs font-medium",
-                          purchaseStatusStyles[purchase.status],
-                        )}
-                      >
-                        {purchaseStatusLabels[purchase.status]}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              <section className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border border-neutral-200 px-4 py-4">
+                <Detail icon={<Mail className="mt-0.5 size-4 shrink-0 text-neutral-400" />} label="Email Address" value={profile.emailAddress} />
+                <Detail label="Gender" value={genderLabel(profile)} />
+                <Detail label="Date of birth" value={profile.dateOfBirth || "—"} />
+                <Detail label="Phone" value={profile.phoneNumber || "—"} />
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "h-6 rounded-full px-2.5 text-xs font-medium",
+                      profile.active
+                        ? "border-[#b7e4c7] bg-[#f3fbf6] text-[#3caf6e]"
+                        : "border-neutral-200 bg-[#f7f7f8] text-neutral-400",
+                    )}
+                  >
+                    {profile.active ? "Active" : "Inactive"}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "h-6 rounded-full px-2.5 text-xs font-medium",
+                      profile.verified
+                        ? "border-[#b7e4c7] bg-[#f3fbf6] text-[#3caf6e]"
+                        : "border-neutral-200 bg-[#f7f7f8] text-neutral-400",
+                    )}
+                  >
+                    {profile.verified ? "Verified" : "Unverified"}
+                  </Badge>
+                </div>
+                <Detail
+                  label="Marketing emails"
+                  value={profile.marketingEmailsEnabled ? "Enabled" : "Disabled"}
+                />
+              </section>
+            </>
+          ) : null}
         </div>
       </section>
+    </div>
+  );
+}
+
+function Detail({
+  icon,
+  label,
+  value,
+}: {
+  icon?: ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex gap-2.5">
+      {icon}
+      <div className="min-w-0">
+        <p className="text-xs text-neutral-400">{label}</p>
+        <p className="mt-0.5 truncate text-sm text-neutral-800">{value}</p>
+      </div>
     </div>
   );
 }

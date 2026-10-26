@@ -1,6 +1,5 @@
 "use server";
 
-import { unstable_rethrow } from "next/navigation";
 import type { ApiResponse } from "@/core/auth/admin-api";
 import type {
   DeliveryOutletFilterQuery,
@@ -8,22 +7,23 @@ import type {
   DeliveryOutletStatus,
   DeliveryOutletWriteRequest,
 } from "@/core/pickup-stations/delivery-outlet-api";
-import { requireAdminSession } from "@/infrastructure/auth/require-admin-session";
+import { adminActionFailure, readActionSession } from "@/infrastructure/auth/admin-action";
 import { privateDeliveryOutletsApi } from "@/infrastructure/pickup-stations/http-delivery-outlets-api";
-import { ApiError } from "@/infrastructure/http/api-client";
 
-export type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
+export type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; message: string; sessionExpired?: boolean };
 
 async function run<T>(
   task: (accessToken: string) => Promise<ApiResponse<T>>,
 ): Promise<ActionResult<T>> {
+  const opened = await readActionSession();
+  if (!opened.session) return opened.failure;
+
   try {
-    const session = await requireAdminSession();
-    return unwrap(await task(session.accessToken));
+    return unwrap(await task(opened.session.accessToken));
   } catch (error) {
-    unstable_rethrow(error);
-    if (error instanceof ApiError) return { ok: false, message: error.message };
-    return { ok: false, message: "Request failed." };
+    return adminActionFailure(error);
   }
 }
 

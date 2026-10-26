@@ -1,15 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Bell, Search } from "lucide-react";
 import { BooksPagination } from "@/components/books/books-pagination";
+import { CustomerStatusDialog } from "@/components/customers/customer-status-dialog";
 import { CustomerViewPanel } from "@/components/customers/customer-view-panel";
 import { CustomersTable } from "@/components/customers/customers-table";
 import { Button } from "@/components/ui/button";
+import type { AdminCustomer } from "@/core/customers/admin-api";
 import type { CustomerListFilter } from "@/core/customers/types";
-import { useCustomers } from "@/features/customers/use-customers";
-import { defaultCustomerListParams } from "@/infrastructure/customers/customers-api";
+import { customersKeys } from "@/features/customers/query-keys";
+import {
+  useActivateAdminCustomer,
+  useDeactivateAdminCustomer,
+  useFilteredAdminCustomers,
+} from "@/features/customers/use-admin-customers";
 import { cn } from "@/lib/utils";
+
+const pageSize = 10;
 
 const filters: { id: CustomerListFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -17,26 +26,47 @@ const filters: { id: CustomerListFilter; label: string }[] = [
   { id: "inactive", label: "Inactive" },
 ];
 
+type StatusChange = {
+  customer: AdminCustomer;
+  action: "activate" | "deactivate";
+};
+
+function customerName(customer: AdminCustomer) {
+  const name = [customer.firstName, customer.lastName].filter(Boolean).join(" ").trim();
+  return name || customer.emailAddress;
+}
+
 export function CustomersScreen() {
-  const [search, setSearch] = useState(defaultCustomerListParams.search);
-  const [filter, setFilter] = useState<CustomerListFilter>(defaultCustomerListParams.filter);
-  const [page, setPage] = useState(defaultCustomerListParams.page);
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<CustomerListFilter>("all");
+  const [page, setPage] = useState(1);
   const [viewingId, setViewingId] = useState<string | null>(null);
-  const { data } = useCustomers({
-    search,
-    filter,
+  const [statusChange, setStatusChange] = useState<StatusChange | null>(null);
+  const [actionError, setActionError] = useState("");
+  const activateCustomer = useActivateAdminCustomer();
+  const deactivateCustomer = useDeactivateAdminCustomer();
+  const customers = useFilteredAdminCustomers({
     page,
-    pageSize: defaultCustomerListParams.pageSize,
+    size: pageSize,
+    filter: {
+      searchParam: search.trim() || undefined,
+      active: filter === "all" ? undefined : filter === "active",
+    },
   });
+  const rows = Array.isArray(customers.data?.data) ? customers.data.data : [];
+  const totalElements = customers.data?.totalElements ?? 0;
+  const totalPages = Math.max(customers.data?.totalPage ?? 1, 1);
+  const showPagination = totalElements >= 10;
 
   function updateSearch(value: string) {
     setSearch(value);
-    setPage(value.trim() === "" && filter === "all" ? defaultCustomerListParams.page : 1);
+    setPage(1);
   }
 
   function updateFilter(next: CustomerListFilter) {
     setFilter(next);
-    setPage(next === "all" && search.trim() === "" ? defaultCustomerListParams.page : 1);
+    setPage(1);
   }
 
   return (
@@ -88,26 +118,53 @@ export function CustomersScreen() {
         </div>
       </div>
 
-      {data ? (
-        <>
-          <CustomersTable
-            customers={data.items}
-            onView={(customer) => setViewingId(customer.id)}
-          />
-          <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-neutral-500">
-              Page {data.page} of {data.totalPages}
-            </p>
-            <BooksPagination
-              page={data.page}
-              totalPages={data.totalPages}
-              onPageChange={setPage}
-            />
-          </div>
-        </>
+      {customers.error instanceof Error ? (
+        <p className="mb-3 text-sm text-danger">{customers.error.message}</p>
+      ) : null}
+      {actionError ? <p className="mb-3 text-sm text-danger">{actionError}</p> : null}
+      {customers.isLoading ? <p className="mb-3 text-sm text-neutral-500">Loading customers…</p> : null}
+
+      <CustomersTable
+        customers={rows}
+        onView={(customer) => setViewingId(customer.customerId)}
+        onActivate={(customer) => setStatusChange({ customer, action: "activate" })}
+        onDeactivate={(customer) => setStatusChange({ customer, action: "deactivate" })}
+      />
+      {showPagination ? (
+        <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-neutral-500">
+            Page {page} of {totalPages}
+          </p>
+          <BooksPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </div>
       ) : null}
       {viewingId ? (
         <CustomerViewPanel customerId={viewingId} onClose={() => setViewingId(null)} />
+      ) : null}
+      {statusChange ? (
+        <CustomerStatusDialog
+          name={customerName(statusChange.customer)}
+          action={statusChange.action}
+          pending={activateCustomer.isPending || deactivateCustomer.isPending}
+          onClose={() => setStatusChange(null)}
+          onConfirm={() => {
+            const change = statusChange;
+            setActionError("");
+            const task =
+              change.action === "activate"
+                ? activateCustomer.mutateAsync(change.customer.customerId)
+                : deactivateCustomer.mutateAsync(change.customer.customerId);
+            task
+              .then(() => {
+                setStatusChange(null);
+                return queryClient.invalidateQueries({ queryKey: customersKeys.all });
+              })
+              .catch((error: unknown) => {
+                setStatusChange(null);
+                setActionError(error instanceof Error ? error.message : "Request failed.");
+              });
+          }}
+        />
       ) : null}
     </div>
   );
