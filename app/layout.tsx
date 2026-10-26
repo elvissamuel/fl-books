@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     template: "%s · AFL",
   },
   description: "Femi Lazarus Books",
+  icons: {
+    icon: "/afl-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

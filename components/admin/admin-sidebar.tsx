@@ -12,7 +12,7 @@ export function AdminSidebar() {
   return (
     <aside className="flex h-dvh w-[232px] shrink-0 flex-col bg-brand text-white">
       <div className="px-5 pt-6 pb-4">
-        <BrandMark className="text-[1.7rem] text-white" />
+        <BrandMark tone="light" />
       </div>
       <nav className="flex flex-col gap-1 px-3" aria-label="Admin">
         {adminNavigation.map((item) => {

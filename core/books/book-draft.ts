@@ -97,7 +97,7 @@ function sharedBookFields(
   if (!shortDescription) return { ok: false, message: "Short summary is required." };
   if (!description) return { ok: false, message: "Full description is required." };
   if (coverImageUrls.length === 0) {
-    return { ok: false, message: "Add at least one cover image URL." };
+    return { ok: false, message: "Add at least one cover image." };
   }
   if (!Number.isFinite(price) || price <= 0) return { ok: false, message: "Price must be greater than 0." };
   if (!Number.isInteger(weightInGrams) || weightInGrams < 1) {

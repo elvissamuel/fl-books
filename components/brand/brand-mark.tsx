@@ -1,21 +1,21 @@
-import { Fraunces } from "next/font/google";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const wordmark = Fraunces({
-  subsets: ["latin"],
-  weight: "600",
-});
-
-export function BrandMark({ className }: { className?: string }) {
+export function BrandMark({
+  className,
+  tone = "brand",
+}: {
+  className?: string;
+  tone?: "brand" | "light";
+}) {
   return (
-    <span
-      className={cn(
-        wordmark.className,
-        "text-[1.65rem] leading-none tracking-[-0.03em] text-brand",
-        className,
-      )}
-    >
-      AFL
-    </span>
+    <Image
+      src="/afl-logo.png"
+      alt="AFL"
+      width={92}
+      height={25}
+      priority
+      className={cn("h-5 w-auto", tone === "light" && "brightness-0 invert", className)}
+    />
   );
 }
