@@ -20,6 +20,7 @@ import type {
   PickupStationListParams,
 } from "@/core/pickup-stations/types";
 import { pickupStationKeys } from "@/features/pickup-stations/query-keys";
+import { unwrapAction } from "@/features/auth/unwrap-action";
 import {
   deliveryOutletsApi,
   listDeliveryOutlets,
@@ -46,11 +47,6 @@ import {
   updatePrivatePickupLocation,
   updatePrivatePickupLocationStatus,
 } from "@/infrastructure/pickup-stations/pickup-locations-actions";
-
-async function unwrapAction<T>(result: { ok: true; data: T } | { ok: false; message: string }) {
-  if (!result.ok) throw new Error(result.message);
-  return result.data;
-}
 
 export function usePickupStations(params: PickupStationListParams, enabled = true) {
   return useQuery({

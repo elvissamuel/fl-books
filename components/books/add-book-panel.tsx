@@ -3,7 +3,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, ChevronDown, ChevronUp, Plus } from "lucide-react";
-import { BookCover } from "@/components/books/book-cover";
 import { Button } from "@/components/ui/button";
 import {
   bookDraftFromCatalog,
@@ -13,6 +12,7 @@ import {
 } from "@/core/books/book-draft";
 import type { BookDraft, PickupAllocation } from "@/core/books/types";
 import { useCreatePrivateBook, usePrivateBook, useUpdatePrivateBook } from "@/features/books/use-books";
+import { useUploadPrivateFile, useUploadPrivateFiles } from "@/features/files/use-files";
 import { cn } from "@/lib/utils";
 
 const controlClass =
@@ -36,7 +36,10 @@ export function AddBookPanel({
   const loadedBook = usePrivateBook(mode === "edit" ? bookId : "");
   const createBook = useCreatePrivateBook();
   const updateBook = useUpdatePrivateBook();
-  const pending = createBook.isPending || updateBook.isPending;
+  const [uploadingCovers, setUploadingCovers] = useState(false);
+  const frontCoverUrl = useRef("");
+  const saving = createBook.isPending || updateBook.isPending;
+  const pending = saving || uploadingCovers;
 
   useEffect(() => {
     panelRef.current?.focus();
@@ -50,7 +53,10 @@ export function AddBookPanel({
   }, [onClose]);
 
   useEffect(() => {
-    if (loadedBook.data) setDraft(bookDraftFromCatalog(loadedBook.data));
+    if (!loadedBook.data) return;
+    const nextDraft = bookDraftFromCatalog(loadedBook.data);
+    frontCoverUrl.current = hostedCoverUrls(nextDraft.coverImageUrls)[0] ?? "";
+    setDraft(nextDraft);
   }, [loadedBook.data]);
 
   function updateDraft<K extends keyof BookDraft>(field: K, value: BookDraft[K]) {
@@ -126,7 +132,7 @@ export function AddBookPanel({
             disabled={pending || (mode === "edit" && loadedBook.isLoading)}
             className="h-8 rounded-full px-3.5 text-[13px]"
           >
-            {pending ? "Saving…" : mode === "create" ? "Publish book" : "Save changes"}
+            {uploadingCovers ? "Uploading…" : saving ? "Saving…" : mode === "create" ? "Publish book" : "Save changes"}
           </Button>
         </div>
 
@@ -247,6 +253,24 @@ export function AddBookPanel({
             <BookCovers
               coverImageUrls={draft.coverImageUrls}
               onChange={(value) => updateDraft("coverImageUrls", value)}
+              onCoverUploaded={(fileUrl) =>
+                setDraft((current) => {
+                  const urls = hostedCoverUrls(current.coverImageUrls).filter(
+                    (url) => url !== frontCoverUrl.current,
+                  );
+                  frontCoverUrl.current = fileUrl;
+                  return { ...current, coverImageUrls: [fileUrl, ...urls].join(", ") };
+                })
+              }
+              onGalleryUploaded={(fileUrls) =>
+                setDraft((current) => ({
+                  ...current,
+                  coverImageUrls: [...hostedCoverUrls(current.coverImageUrls), ...fileUrls].join(
+                    ", ",
+                  ),
+                }))
+              }
+              onUploadingChange={setUploadingCovers}
             />
           </section>
 
@@ -371,21 +395,96 @@ function Field({
   );
 }
 
-function BookCovers({
-  coverImageUrls,
-  onChange,
-}: {
-  coverImageUrls: string;
-  onChange: (value: string) => void;
-}) {
-  const hostedUrls = coverImageUrls
+function hostedCoverUrls(value: string) {
+  return value
     .split(/[\s,]+/)
     .map((url) => url.trim())
     .filter((url) => url.startsWith("http://") || url.startsWith("https://"));
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [gallery, setGallery] = useState<Array<string | null>>([null, null]);
+}
 
-  const previewUrl = coverUrl ?? hostedUrls[0] ?? null;
+function BookCovers({
+  coverImageUrls,
+  onChange,
+  onCoverUploaded,
+  onGalleryUploaded,
+  onUploadingChange,
+}: {
+  coverImageUrls: string;
+  onChange: (value: string) => void;
+  onCoverUploaded: (fileUrl: string) => void;
+  onGalleryUploaded: (fileUrls: string[]) => void;
+  onUploadingChange: (uploading: boolean) => void;
+}) {
+  const uploadFile = useUploadPrivateFile();
+  const uploadFiles = useUploadPrivateFiles();
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+  const [uploadError, setUploadError] = useState("");
+  const coverPreviewRef = useRef<string | null>(null);
+  const galleryPreviewRef = useRef<string[]>([]);
+  const hostedUrls = hostedCoverUrls(coverImageUrls);
+  const previewUrl = coverPreview ?? hostedUrls[0] ?? null;
+  const uploading = uploadFile.isPending || uploadFiles.isPending;
+
+  useEffect(() => {
+    onUploadingChange(uploading);
+  }, [onUploadingChange, uploading]);
+
+  useEffect(() => {
+    return () => {
+      if (coverPreviewRef.current) URL.revokeObjectURL(coverPreviewRef.current);
+      for (const preview of galleryPreviewRef.current) URL.revokeObjectURL(preview);
+    };
+  }, []);
+
+  function replaceCoverPreview(next: string | null) {
+    if (coverPreviewRef.current) URL.revokeObjectURL(coverPreviewRef.current);
+    coverPreviewRef.current = next;
+    setCoverPreview(next);
+  }
+
+  function replaceGalleryPreviews(next: string[]) {
+    for (const preview of galleryPreviewRef.current) URL.revokeObjectURL(preview);
+    galleryPreviewRef.current = next;
+    setGalleryPreviews(next);
+  }
+
+  async function uploadCover(file: File) {
+    replaceCoverPreview(URL.createObjectURL(file));
+    setUploadError("");
+    try {
+      const uploaded = await uploadFile.mutateAsync({
+        category: "BOOK_THUMBNAIL",
+        file,
+      });
+      if (!uploaded.fileUrl) throw new Error("Cover upload did not return a file URL.");
+      onCoverUploaded(uploaded.fileUrl);
+      replaceCoverPreview(null);
+    } catch (error) {
+      replaceCoverPreview(null);
+      setUploadError(error instanceof Error ? error.message : "Cover upload failed.");
+    }
+  }
+
+  async function uploadGallery(files: File[]) {
+    replaceGalleryPreviews(files.map((file) => URL.createObjectURL(file)));
+    setUploadError("");
+    try {
+      const uploaded = await uploadFiles.mutateAsync({
+        category: "BOOK_THUMBNAIL",
+        files,
+      });
+      const fileUrls = (Array.isArray(uploaded) ? uploaded : [])
+        .map((item) => item.fileUrl)
+        .filter(Boolean);
+      if (fileUrls.length === 0) throw new Error("Gallery upload did not return a file URL.");
+      onGalleryUploaded(fileUrls);
+      replaceGalleryPreviews([]);
+    } catch (error) {
+      replaceGalleryPreviews([]);
+      setUploadError(error instanceof Error ? error.message : "Gallery upload failed.");
+    }
+  }
 
   return (
     <div className="mt-3 rounded-2xl border border-neutral-200 px-4 py-4">
@@ -396,9 +495,10 @@ function BookCovers({
         id="cover-image-urls"
         value={coverImageUrls}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="https://example.com/cover.png"
+        placeholder="Upload a cover, or paste a hosted URL"
         className={cn(controlClass, "mb-4 h-10")}
       />
+      {uploadError ? <p className="mb-3 text-sm text-danger">{uploadError}</p> : null}
       <div className="flex flex-wrap items-center gap-8">
         <label className="flex h-[104px] w-[112px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-neutral-200 text-neutral-400 hover:bg-neutral-50">
           {previewUrl ? (
@@ -413,16 +513,20 @@ function BookCovers({
           ) : (
             <>
               <Plus className="size-4" strokeWidth={1.75} />
-              <span className="text-xs text-neutral-500">Add cover photo</span>
+              <span className="text-xs text-neutral-500">
+                {uploadFile.isPending ? "Uploading…" : "Add cover photo"}
+              </span>
             </>
           )}
           <input
             type="file"
             accept="image/*"
             className="sr-only"
+            disabled={uploadFile.isPending}
             onChange={(event) => {
               const file = event.target.files?.[0];
-              setCoverUrl(file ? URL.createObjectURL(file) : null);
+              event.target.value = "";
+              if (file) void uploadCover(file);
             }}
           />
         </label>
@@ -432,37 +536,44 @@ function BookCovers({
           <div className="flex items-center gap-3">
             <label className="flex h-14 w-10 cursor-pointer items-center justify-center rounded-lg border border-neutral-200 text-neutral-400 hover:bg-neutral-50">
               <Plus className="size-4" strokeWidth={1.75} />
-              <span className="sr-only">Add gallery photo</span>
+              <span className="sr-only">
+                {uploadFiles.isPending ? "Uploading gallery" : "Add gallery photo"}
+              </span>
               <input
                 type="file"
                 accept="image/*"
                 multiple
                 className="sr-only"
+                disabled={uploadFiles.isPending}
                 onChange={(event) => {
-                  const files = event.target.files;
-                  if (!files?.length) return;
-                  setGallery((current) => [
-                    ...current,
-                    ...Array.from(files, (file) => URL.createObjectURL(file)),
-                  ]);
+                  const files = Array.from(event.target.files ?? []);
+                  event.target.value = "";
+                  if (files.length > 0) void uploadGallery(files);
                 }}
               />
             </label>
-            {gallery.map((src, index) =>
-              src ? (
-                <Image
-                  key={`${src}-${index}`}
-                  src={src}
-                  alt=""
-                  width={40}
-                  height={56}
-                  unoptimized
-                  className="h-14 w-10 rounded-[3px] object-cover"
-                />
-              ) : (
-                <BookCover key={`sample-${index}`} src={null} title="Be Different" />
-              ),
-            )}
+            {hostedUrls.slice(1).map((src) => (
+              <Image
+                key={src}
+                src={src}
+                alt=""
+                width={40}
+                height={56}
+                unoptimized
+                className="h-14 w-10 rounded-[3px] object-cover"
+              />
+            ))}
+            {galleryPreviews.map((src) => (
+              <Image
+                key={src}
+                src={src}
+                alt=""
+                width={40}
+                height={56}
+                unoptimized
+                className="h-14 w-10 rounded-[3px] object-cover"
+              />
+            ))}
           </div>
         </div>
       </div>

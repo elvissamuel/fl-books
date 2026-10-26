@@ -12,11 +12,7 @@ import {
 } from "@/infrastructure/books/books-actions";
 import { booksApi, listBooks } from "@/infrastructure/books/books-api";
 import { booksKeys } from "@/features/books/query-keys";
-
-async function unwrapAction<T>(result: { ok: true; data: T } | { ok: false; message: string }) {
-  if (!result.ok) throw new Error(result.message);
-  return result.data;
-}
+import { unwrapAction } from "@/features/auth/unwrap-action";
 
 export function useBooks(params: BookListParams) {
   return useQuery({

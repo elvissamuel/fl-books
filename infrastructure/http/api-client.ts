@@ -29,7 +29,10 @@ export async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
   headers.set("Accept", "application/json");
   headers.set("X-API-KEY", requiredEnv("NEXT_PUBLIC_API_KEY"));
 
-  if (init?.body && !headers.has("Content-Type")) {
+  const formData = typeof FormData !== "undefined" && init?.body instanceof FormData;
+  if (formData) {
+    headers.delete("Content-Type");
+  } else if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 

@@ -19,11 +19,7 @@ import {
   resetAdminPassword,
   updateAdminAccount,
 } from "@/infrastructure/auth/admin-auth-actions";
-
-async function unwrapAction<T>(result: { ok: true; data: T } | { ok: false; message: string }) {
-  if (!result.ok) throw new Error(result.message);
-  return result.data;
-}
+import { unwrapAction } from "@/features/auth/unwrap-action";
 
 export function useForgotAdminPassword() {
   return useMutation({
