@@ -1,9 +1,15 @@
 "use client";
 
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -12,11 +18,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Testimonial } from "@/core/testimonials/types";
+import type { PrivateTestimonial } from "@/core/testimonials/private-api";
+
+function initials(name: string) {
+  const letters = name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+  return letters || "T";
+}
 
 const headings = ["Name", "Role", "Message", "Action"] as const;
 
-export function TestimonialsTable({ testimonials }: { testimonials: Testimonial[] }) {
+export function TestimonialsTable({
+  testimonials,
+  onEdit,
+  onDelete,
+}: {
+  testimonials: PrivateTestimonial[];
+  onEdit: (testimonial: PrivateTestimonial) => void;
+  onDelete: (testimonial: PrivateTestimonial) => void;
+}) {
   return (
     <Card className="gap-0 overflow-hidden py-0 shadow-none ring-neutral-200/80">
       <Table>
@@ -46,28 +70,49 @@ export function TestimonialsTable({ testimonials }: { testimonials: Testimonial[
             <TableRow key={testimonial.id} className="border-neutral-100 hover:bg-transparent">
               <TableCell className="py-3.5 pl-5">
                 <div className="flex items-center gap-3">
-                  <Image
-                    src={testimonial.avatarSrc}
-                    alt=""
-                    width={32}
-                    height={32}
-                    className="size-8 shrink-0 rounded-full object-cover"
-                  />
+                  {testimonial.imageUrl ? (
+                    <Image
+                      src={testimonial.imageUrl}
+                      alt=""
+                      width={32}
+                      height={32}
+                      unoptimized
+                      className="size-8 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-medium text-brand">
+                      {initials(testimonial.name)}
+                    </span>
+                  )}
                   <span className="text-sm text-neutral-800">{testimonial.name}</span>
                 </div>
               </TableCell>
               <TableCell className="py-3.5 text-sm text-neutral-800">{testimonial.role}</TableCell>
               <TableCell className="py-3.5 text-sm text-neutral-800">{testimonial.message}</TableCell>
               <TableCell className="py-3.5 pr-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-neutral-500 hover:bg-transparent"
-                  aria-label={`Actions for ${testimonial.name}`}
-                >
-                  <MoreVertical className="size-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-neutral-500 hover:bg-transparent"
+                      aria-label={`Actions for ${testimonial.name}`}
+                    >
+                      <MoreVertical className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => onEdit(testimonial)}>
+                      <Pencil className="size-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem variant="destructive" onSelect={() => onDelete(testimonial)}>
+                      <Trash2 className="size-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           ))}
