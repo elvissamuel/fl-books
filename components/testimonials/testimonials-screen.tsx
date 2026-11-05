@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Bell, Loader2, Plus } from "lucide-react";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { AddTestimonyPanel } from "@/components/testimonials/add-testimony-panel";
-import { TestimonialsTable } from "@/components/testimonials/testimonials-table";
+import { TestimonialsTable, TestimonialsTableSkeleton } from "@/components/testimonials/testimonials-table";
 import { TestimonyAddedDialog } from "@/components/testimonials/testimony-added-dialog";
 import { TestimonyDeleteDialog } from "@/components/testimonials/testimony-delete-dialog";
 import { Button } from "@/components/ui/button";
@@ -106,9 +106,6 @@ export function TestimonialsScreen() {
         <p className="mb-3 text-sm text-danger">{testimonials.error.message}</p>
       ) : null}
       {actionError ? <p className="mb-3 text-sm text-danger">{actionError}</p> : null}
-      {testimonials.isLoading ? (
-        <p className="mb-3 text-sm text-neutral-500">Loading testimonials…</p>
-      ) : null}
       {editRequestId && panel?.mode !== "edit" ? (
         <div
           role="status"
@@ -119,15 +116,19 @@ export function TestimonialsScreen() {
         </div>
       ) : null}
 
-      <TestimonialsTable
-        testimonials={rows}
-        onEdit={(testimonial) => {
-          setActionError("");
-          setPanel(null);
-          setEditRequestId(testimonial.id);
-        }}
-        onDelete={setPendingDelete}
-      />
+      {testimonials.isLoading ? (
+        <TestimonialsTableSkeleton rows={pageSize} />
+      ) : (
+        <TestimonialsTable
+          testimonials={rows}
+          onEdit={(testimonial) => {
+            setActionError("");
+            setPanel(null);
+            setEditRequestId(testimonial.id);
+          }}
+          onDelete={setPendingDelete}
+        />
+      )}
 
       {testimonials.data ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">

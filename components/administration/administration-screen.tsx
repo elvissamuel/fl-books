@@ -5,7 +5,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Bell, Plus, Search } from "lucide-react";
 import { AdminAccountDialog } from "@/components/administration/add-admin-dialog";
 import { AdminStatusDialog } from "@/components/administration/admin-status-dialog";
-import { AdministrationTable } from "@/components/administration/administration-table";
+import {
+  AdministrationTable,
+  AdministrationTableSkeleton,
+} from "@/components/administration/administration-table";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { Button } from "@/components/ui/button";
 import type { AdminAccount } from "@/core/auth/admin-api";
@@ -133,19 +136,21 @@ export function AdministrationScreen() {
         <p className="mb-3 text-sm text-danger">{admins.error.message}</p>
       ) : null}
       {actionError ? <p className="mb-3 text-sm text-danger">{actionError}</p> : null}
-      {admins.isLoading ? <p className="mb-3 text-sm text-neutral-500">Loading admins…</p> : null}
-
-      <AdministrationTable
-        admins={rows}
-        onEdit={(admin) => setEditingId(admin.adminId)}
-        onActivate={(admin) => setStatusChange({ admin, action: "activate" })}
-        onDeactivate={(admin) => setStatusChange({ admin, action: "deactivate" })}
-        onDelete={(admin) => {
-          const name = `${admin.firstName} ${admin.lastName}`.trim();
-          if (!window.confirm(`Delete ${name}?`)) return;
-          runAction(admin, deleteAdmin.mutateAsync);
-        }}
-      />
+      {admins.isLoading ? (
+        <AdministrationTableSkeleton />
+      ) : (
+        <AdministrationTable
+          admins={rows}
+          onEdit={(admin) => setEditingId(admin.adminId)}
+          onActivate={(admin) => setStatusChange({ admin, action: "activate" })}
+          onDeactivate={(admin) => setStatusChange({ admin, action: "deactivate" })}
+          onDelete={(admin) => {
+            const name = `${admin.firstName} ${admin.lastName}`.trim();
+            if (!window.confirm(`Delete ${name}?`)) return;
+            runAction(admin, deleteAdmin.mutateAsync);
+          }}
+        />
+      )}
 
       {pageData ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">

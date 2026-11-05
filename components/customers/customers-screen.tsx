@@ -6,7 +6,7 @@ import { Bell, Search } from "lucide-react";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { CustomerStatusDialog } from "@/components/customers/customer-status-dialog";
 import { CustomerViewPanel } from "@/components/customers/customer-view-panel";
-import { CustomersTable } from "@/components/customers/customers-table";
+import { CustomersTable, CustomersTableSkeleton } from "@/components/customers/customers-table";
 import { Button } from "@/components/ui/button";
 import type { AdminCustomer } from "@/core/customers/admin-api";
 import type { CustomerListFilter } from "@/core/customers/types";
@@ -122,14 +122,16 @@ export function CustomersScreen() {
         <p className="mb-3 text-sm text-danger">{customers.error.message}</p>
       ) : null}
       {actionError ? <p className="mb-3 text-sm text-danger">{actionError}</p> : null}
-      {customers.isLoading ? <p className="mb-3 text-sm text-neutral-500">Loading customers…</p> : null}
-
-      <CustomersTable
-        customers={rows}
-        onView={(customer) => setViewingId(customer.customerId)}
-        onActivate={(customer) => setStatusChange({ customer, action: "activate" })}
-        onDeactivate={(customer) => setStatusChange({ customer, action: "deactivate" })}
-      />
+      {customers.isLoading ? (
+        <CustomersTableSkeleton />
+      ) : (
+        <CustomersTable
+          customers={rows}
+          onView={(customer) => setViewingId(customer.customerId)}
+          onActivate={(customer) => setStatusChange({ customer, action: "activate" })}
+          onDeactivate={(customer) => setStatusChange({ customer, action: "deactivate" })}
+        />
+      )}
       {showPagination ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-neutral-500">

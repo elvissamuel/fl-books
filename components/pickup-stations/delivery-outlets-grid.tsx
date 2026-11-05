@@ -11,6 +11,40 @@ const statusStyles: Record<DeliveryOutletStatus, string> = {
   INACTIVE: "border-[#f5c2c2] bg-[#fff6f6] text-[#e35d6a]",
 };
 
+function SkeletonBar({ className }: { className: string }) {
+  return <span className={cn("block animate-pulse rounded-md bg-neutral-200", className)} />;
+}
+
+export function DeliveryOutletsSkeleton({ cards = 6 }: { cards?: number }) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-3" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Loading delivery outlets</span>
+      {Array.from({ length: cards }, (_, index) => (
+        <article
+          key={index}
+          className="rounded-xl border border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+        >
+          <SkeletonBar className="h-3 w-16" />
+          <SkeletonBar className="mt-4 h-4 w-48" />
+          <div className="mt-3 space-y-3 rounded-lg border border-neutral-200 px-3 py-2.5">
+            <SkeletonBar className="h-3 w-20" />
+            <SkeletonBar className="h-3.5 w-full" />
+            <div className="grid grid-cols-3 gap-2">
+              <SkeletonBar className="h-8" />
+              <SkeletonBar className="h-8" />
+              <SkeletonBar className="h-8" />
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-neutral-200 px-3 py-2.5">
+            <SkeletonBar className="h-8" />
+            <SkeletonBar className="h-8" />
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 export function DeliveryOutletsGrid({
   outlets,
   onEdit,

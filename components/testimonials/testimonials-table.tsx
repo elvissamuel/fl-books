@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PrivateTestimonial } from "@/core/testimonials/private-api";
+import { cn } from "@/lib/utils";
 
 function initials(name: string) {
   const letters = name
@@ -31,6 +32,59 @@ function initials(name: string) {
 }
 
 const headings = ["Name", "Role", "Message", "Action"] as const;
+
+function SkeletonBar({ className }: { className: string }) {
+  return <span className={cn("block animate-pulse rounded-md bg-neutral-200", className)} />;
+}
+
+export function TestimonialsTableSkeleton({ rows = 7 }: { rows?: number }) {
+  return (
+    <Card
+      className="gap-0 overflow-hidden py-0 shadow-none ring-neutral-200/80"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading testimonials</span>
+      <Table>
+        <TableHeader className="bg-[#f7f7f8]">
+          <TableRow className="border-neutral-100 hover:bg-transparent">
+            <TableHead className="h-11 w-[26%] pl-5 text-xs font-medium text-neutral-400">
+              {headings[0]}
+            </TableHead>
+            <TableHead className="h-11 w-[22%] text-xs font-medium text-neutral-400">
+              {headings[1]}
+            </TableHead>
+            <TableHead className="h-11 text-xs font-medium text-neutral-400">{headings[2]}</TableHead>
+            <TableHead className="h-11 w-24 pr-5 text-xs font-medium text-neutral-400">
+              {headings[3]}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody className="[&_tr:last-child]:border-b">
+          {Array.from({ length: rows }, (_, index) => (
+            <TableRow key={index} className="border-neutral-100 hover:bg-transparent">
+              <TableCell className="py-3.5 pl-5">
+                <div className="flex items-center gap-3">
+                  <span className="block size-8 shrink-0 animate-pulse rounded-full bg-neutral-200" />
+                  <SkeletonBar className="h-3.5 w-28" />
+                </div>
+              </TableCell>
+              <TableCell className="py-3.5">
+                <SkeletonBar className="h-3.5 w-24" />
+              </TableCell>
+              <TableCell className="py-3.5">
+                <SkeletonBar className="h-3.5 w-full max-w-md" />
+              </TableCell>
+              <TableCell className="py-3.5 pr-3">
+                <span className="block size-7 animate-pulse rounded-md bg-neutral-200" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
 
 export function TestimonialsTable({
   testimonials,

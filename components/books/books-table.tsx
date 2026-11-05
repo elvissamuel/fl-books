@@ -46,6 +46,70 @@ function bookStatusLabel(book: CatalogBook) {
   return "—";
 }
 
+function SkeletonBar({ className }: { className: string }) {
+  return <span className={cn("block animate-pulse rounded-md bg-neutral-200", className)} />;
+}
+
+export function BooksTableSkeleton({ rows = 8 }: { rows?: number }) {
+  return (
+    <Card
+      className="gap-0 overflow-hidden py-0 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-neutral-200/80"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading books</span>
+      <Table>
+        <TableHeader className="bg-[#f7f7f8]">
+          <TableRow className="border-neutral-100 hover:bg-transparent">
+            <TableHead className="h-11 w-12 pl-4">
+              <span className="block size-4 animate-pulse rounded-[4px] bg-neutral-200" />
+            </TableHead>
+            <TableHead className="h-11 text-xs font-medium text-neutral-500">Product Details</TableHead>
+            <TableHead className="h-11 text-xs font-medium text-neutral-500">Price</TableHead>
+            <TableHead className="h-11 text-xs font-medium text-neutral-500">Stocks</TableHead>
+            <TableHead className="h-11 text-xs font-medium text-neutral-500">weight</TableHead>
+            <TableHead className="h-11 text-xs font-medium text-neutral-500">Status</TableHead>
+            <TableHead className="h-11 pr-4 text-xs font-medium text-neutral-500">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: rows }, (_, index) => (
+            <TableRow key={index} className="border-neutral-100 hover:bg-transparent">
+              <TableCell className="py-3.5 pl-4">
+                <span className="block size-4 animate-pulse rounded-[4px] bg-neutral-200" />
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-3 py-1">
+                  <span className="block h-14 w-10 shrink-0 animate-pulse rounded-[3px] bg-neutral-200" />
+                  <div className="min-w-0 space-y-2">
+                    <SkeletonBar className="h-3.5 w-40" />
+                    <SkeletonBar className="h-3 w-24" />
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <SkeletonBar className="h-3.5 w-16" />
+              </TableCell>
+              <TableCell>
+                <SkeletonBar className="h-3.5 w-8" />
+              </TableCell>
+              <TableCell>
+                <SkeletonBar className="h-3.5 w-12" />
+              </TableCell>
+              <TableCell>
+                <SkeletonBar className="h-6 w-16 rounded-full" />
+              </TableCell>
+              <TableCell className="pr-3">
+                <span className="block size-7 animate-pulse rounded-md bg-neutral-200" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
 export function BooksTable({
   books,
   selectedIds,

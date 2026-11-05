@@ -1,17 +1,9 @@
 import type { CatalogBook, CreateBookRequest, UpdateBookRequest } from "@/core/books/private-api";
-import type { BookDraft, PickupAllocation } from "@/core/books/types";
-
-const emptyAllocation: PickupAllocation = {
-  id: "",
-  name: "",
-  address: "",
-  quantity: "0",
-  enabled: true,
-};
+import type { BookDraft } from "@/core/books/types";
 
 export const emptyBookDraft: BookDraft = {
   title: "",
-  authorName: "",
+  authorName: "Femi Lazarus",
   categoryId: "",
   stockQuantity: "",
   shortSummary: "",
@@ -23,7 +15,7 @@ export const emptyBookDraft: BookDraft = {
   deliveryDispatch: false,
   bulkPurchaseAvailable: false,
   inventoryLimit: "",
-  allocations: [{ ...emptyAllocation }],
+  allocations: [],
 };
 
 export function bookDraftFromCatalog(book: CatalogBook): BookDraft {
@@ -50,7 +42,7 @@ export function bookDraftFromCatalog(book: CatalogBook): BookDraft {
             quantity: String(allocation.quantity),
             enabled: allocation.enabled,
           }))
-        : [{ ...emptyAllocation }],
+        : [],
   };
 }
 
@@ -93,7 +85,7 @@ function sharedBookFields(
 
   if (!title) return { ok: false, message: "Book title is required." };
   if (!authorName) return { ok: false, message: "Author name is required." };
-  if (!categoryId) return { ok: false, message: "Category ID is required." };
+  if (!categoryId) return { ok: false, message: "Category is required." };
   if (!shortDescription) return { ok: false, message: "Short summary is required." };
   if (!description) return { ok: false, message: "Full description is required." };
   if (coverImageUrls.length === 0) {
