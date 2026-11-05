@@ -6,7 +6,7 @@ import { Bell, Plus, Search } from "lucide-react";
 import { AddBookPanel } from "@/components/books/add-book-panel";
 import { BookUploadedDialog } from "@/components/books/book-uploaded-dialog";
 import { BooksPagination } from "@/components/books/books-pagination";
-import { BooksTable } from "@/components/books/books-table";
+import { BooksTable, BooksTableSkeleton } from "@/components/books/books-table";
 import { Button } from "@/components/ui/button";
 import type { BookListQuery } from "@/core/books/private-api";
 import type { BookListFilter } from "@/core/books/types";
@@ -139,24 +139,26 @@ export function BooksScreen() {
         <p className="mb-3 text-sm text-danger">{books.error.message}</p>
       ) : null}
       {actionError ? <p className="mb-3 text-sm text-danger">{actionError}</p> : null}
-      {books.isLoading ? <p className="mb-3 text-sm text-neutral-500">Loading books…</p> : null}
-
-      <BooksTable
-        books={rows}
-        selectedIds={selectedIds}
-        onSelectedIdsChange={setSelectedIds}
-        onEdit={(book) => setPanel({ mode: "edit", bookId: book.id })}
-        onDelete={(book) => {
-          if (!window.confirm(`Delete ${book.title}?`)) return;
-          setActionError("");
-          deleteBook
-            .mutateAsync(book.id)
-            .then(() => refresh())
-            .catch((error: unknown) => {
-              setActionError(error instanceof Error ? error.message : "Request failed.");
-            });
-        }}
-      />
+      {books.isLoading ? (
+        <BooksTableSkeleton />
+      ) : (
+        <BooksTable
+          books={rows}
+          selectedIds={selectedIds}
+          onSelectedIdsChange={setSelectedIds}
+          onEdit={(book) => setPanel({ mode: "edit", bookId: book.id })}
+          onDelete={(book) => {
+            if (!window.confirm(`Delete ${book.title}?`)) return;
+            setActionError("");
+            deleteBook
+              .mutateAsync(book.id)
+              .then(() => refresh())
+              .catch((error: unknown) => {
+                setActionError(error instanceof Error ? error.message : "Request failed.");
+              });
+          }}
+        />
+      )}
 
       {pageData ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">

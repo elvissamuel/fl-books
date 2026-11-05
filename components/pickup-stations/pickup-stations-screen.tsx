@@ -5,13 +5,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Bell, Loader2, Plus, Search } from "lucide-react";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { AddDeliveryOutletDialog } from "@/components/pickup-stations/add-delivery-outlet-dialog";
-import { DeliveryOutletsGrid } from "@/components/pickup-stations/delivery-outlets-grid";
+import {
+  DeliveryOutletsGrid,
+  DeliveryOutletsSkeleton,
+} from "@/components/pickup-stations/delivery-outlets-grid";
 import { LocationAddedDialog } from "@/components/pickup-stations/location-added-dialog";
 import { LocationStatusDialog } from "@/components/pickup-stations/location-status-dialog";
 import { LocationViewDialog } from "@/components/pickup-stations/location-view-dialog";
 import { OutletDeleteDialog } from "@/components/pickup-stations/outlet-delete-dialog";
 import { PickupLocationDialog } from "@/components/pickup-stations/pickup-location-dialog";
-import { PickupStationsTable } from "@/components/pickup-stations/pickup-stations-table";
+import {
+  PickupStationsTable,
+  PickupStationsTableSkeleton,
+} from "@/components/pickup-stations/pickup-stations-table";
 import { Button } from "@/components/ui/button";
 import type {
   DeliveryOutletStatus,
@@ -288,9 +294,6 @@ export function PickupStationsScreen() {
         <p className="mb-3 text-sm text-danger">{activeQuery.error.message}</p>
       ) : null}
       {actionError ? <p className="mb-3 text-sm text-danger">{actionError}</p> : null}
-      {activeQuery.isLoading ? (
-        <p className="mb-3 text-sm text-neutral-500">Loading locations…</p>
-      ) : null}
       {editLocationRequestId && !editingLocation ? (
         <div
           role="status"
@@ -310,7 +313,13 @@ export function PickupStationsScreen() {
         </div>
       ) : null}
 
-      {pickup ? (
+      {activeQuery.isLoading ? (
+        pickup ? (
+          <PickupStationsTableSkeleton rows={pickupPageSize} />
+        ) : (
+          <DeliveryOutletsSkeleton cards={outletPageSize} />
+        )
+      ) : pickup ? (
         <PickupStationsTable
           stations={stationRows}
           onView={(station) => setViewingLocationId(station.id)}

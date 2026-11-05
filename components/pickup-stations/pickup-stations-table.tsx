@@ -37,6 +37,76 @@ const countryCodes: Record<string, ShippingCountry["code"]> = {
 
 const headings = ["Country", "Location", "Address", "City", "State", "Contact", "Status", "Action"];
 
+function SkeletonBar({ className }: { className: string }) {
+  return <span className={cn("block animate-pulse rounded-md bg-neutral-200", className)} />;
+}
+
+export function PickupStationsTableSkeleton({ rows = 10 }: { rows?: number }) {
+  return (
+    <Card
+      className="gap-0 overflow-hidden py-0 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-neutral-200/80"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading locations</span>
+      <Table>
+        <TableHeader className="bg-[#f7f7f8]">
+          <TableRow className="border-neutral-100 hover:bg-transparent">
+            {headings.map((heading, index) => (
+              <TableHead
+                key={heading}
+                className={cn(
+                  "h-11 text-xs font-medium text-neutral-500",
+                  index === 0 && "pl-5",
+                  index === headings.length - 1 && "pr-5",
+                )}
+              >
+                {heading}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: rows }, (_, index) => (
+            <TableRow key={index} className="border-neutral-100 hover:bg-transparent">
+              <TableCell className="py-4 pl-5">
+                <div className="flex items-center gap-2">
+                  <span className="block size-4 animate-pulse rounded-sm bg-neutral-200" />
+                  <SkeletonBar className="h-3.5 w-16" />
+                </div>
+              </TableCell>
+              <TableCell className="py-4">
+                <SkeletonBar className="h-3.5 w-28" />
+              </TableCell>
+              <TableCell className="py-4">
+                <SkeletonBar className="h-3.5 w-44" />
+              </TableCell>
+              <TableCell className="py-4">
+                <SkeletonBar className="h-3.5 w-16" />
+              </TableCell>
+              <TableCell className="py-4">
+                <SkeletonBar className="h-3.5 w-16" />
+              </TableCell>
+              <TableCell className="py-4">
+                <div className="space-y-2">
+                  <SkeletonBar className="h-3.5 w-24" />
+                  <SkeletonBar className="h-3 w-20" />
+                </div>
+              </TableCell>
+              <TableCell className="py-4">
+                <SkeletonBar className="h-6 w-16 rounded-full" />
+              </TableCell>
+              <TableCell className="py-4 pr-4">
+                <span className="block size-7 animate-pulse rounded-md bg-neutral-200" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
 export function PickupStationsTable({
   stations,
   onView,

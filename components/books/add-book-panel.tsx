@@ -11,9 +11,14 @@ import {
   updateBookRequestFromDraft,
 } from "@/core/books/book-draft";
 import type { BookDraft, PickupAllocation } from "@/core/books/types";
+import type { PickupLocation } from "@/core/pickup-stations/private-api";
+import { usePrivateBookCategories } from "@/features/book-categories/use-private-book-categories";
 import { useCreatePrivateBook, usePrivateBook, useUpdatePrivateBook } from "@/features/books/use-books";
 import { useUploadPrivateFile, useUploadPrivateFiles } from "@/features/files/use-files";
+import { usePrivatePickupLocations } from "@/features/pickup-stations/use-pickup-stations";
 import { cn } from "@/lib/utils";
+
+const authorNames = ["Femi Lazarus"];
 
 const controlClass =
   "w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-brand focus:ring-2 focus:ring-brand/15";
@@ -34,8 +39,12 @@ export function AddBookPanel({
   const [draft, setDraft] = useState<BookDraft>(emptyBookDraft);
   const [formError, setFormError] = useState("");
   const loadedBook = usePrivateBook(mode === "edit" ? bookId : "");
+  const categories = usePrivateBookCategories({ page: 1, size: 100 });
+  const pickupLocations = usePrivatePickupLocations({ page: 1, size: 100 });
   const createBook = useCreatePrivateBook();
   const updateBook = useUpdatePrivateBook();
+  const categoryRows = Array.isArray(categories.data?.data) ? categories.data.data : [];
+  const locationRows = Array.isArray(pickupLocations.data?.data) ? pickupLocations.data.data : [];
   const [uploadingCovers, setUploadingCovers] = useState(false);
   const frontCoverUrl = useRef("");
   const saving = createBook.isPending || updateBook.isPending;
@@ -59,17 +68,63 @@ export function AddBookPanel({
     setDraft(nextDraft);
   }, [loadedBook.data]);
 
+  useEffect(() => {
+    const rows = Array.isArray(pickupLocations.data?.data) ? pickupLocations.data.data : [];
+    if (rows.length === 0) return;
+    setDraft((current) => {
+      let changed = false;
+      const allocations = current.allocations.map((allocation) => {
+        const location = rows.find((item) => item.id === allocation.id);
+        if (!location) return allocation;
+        if (allocation.name === location.locationName && allocation.address === location.fullAddress) {
+          return allocation;
+        }
+        changed = true;
+        return { ...allocation, name: location.locationName, address: location.fullAddress };
+      });
+      return changed ? { ...current, allocations } : current;
+    });
+  }, [pickupLocations.data]);
+
   function updateDraft<K extends keyof BookDraft>(field: K, value: BookDraft[K]) {
     setDraft((current) => ({ ...current, [field]: value }));
   }
 
-  function updateAllocation(index: number, patch: Partial<PickupAllocation>) {
+  function updateAllocation(id: string, patch: Partial<PickupAllocation>) {
     setDraft((current) => ({
       ...current,
-      allocations: current.allocations.map((station, stationIndex) =>
-        stationIndex === index ? { ...station, ...patch } : station,
+      allocations: current.allocations.map((station) =>
+        station.id === id ? { ...station, ...patch } : station,
       ),
     }));
+  }
+
+  function togglePickupLocation(
+    location: Pick<PickupLocation, "id" | "locationName" | "fullAddress">,
+    selected: boolean,
+  ) {
+    setDraft((current) => {
+      if (!selected) {
+        return {
+          ...current,
+          allocations: current.allocations.filter((station) => station.id !== location.id),
+        };
+      }
+      if (current.allocations.some((station) => station.id === location.id)) return current;
+      return {
+        ...current,
+        allocations: [
+          ...current.allocations,
+          {
+            id: location.id,
+            name: location.locationName,
+            address: location.fullAddress,
+            quantity: "0",
+            enabled: true,
+          },
+        ],
+      };
+    });
   }
 
   function publishBook() {
@@ -167,21 +222,53 @@ export function AddBookPanel({
 
             <div className="grid gap-3.5 sm:grid-cols-2">
               <Field id="author-name" label="Author Name">
-                <input
-                  id="author-name"
-                  value={draft.authorName}
-                  onChange={(event) => updateDraft("authorName", event.target.value)}
-                  className={cn(controlClass, "h-10")}
-                />
+                <div className="relative">
+                  <select
+                    id="author-name"
+                    value={draft.authorName}
+                    onChange={(event) => updateDraft("authorName", event.target.value)}
+                    className={cn(controlClass, "h-10 appearance-none pr-9")}
+                  >
+                    {(authorNames.includes(draft.authorName) || !draft.authorName
+                      ? authorNames
+                      : [draft.authorName, ...authorNames]
+                    ).map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-neutral-500" />
+                </div>
               </Field>
-              <Field id="category-id" label="Category ID">
-                <input
-                  id="category-id"
-                  value={draft.categoryId}
-                  onChange={(event) => updateDraft("categoryId", event.target.value)}
-                  placeholder="Category ID"
-                  className={cn(controlClass, "h-10")}
-                />
+              <Field id="category-id" label="Category">
+                <div className="relative">
+                  <select
+                    id="category-id"
+                    value={draft.categoryId}
+                    onChange={(event) => updateDraft("categoryId", event.target.value)}
+                    className={cn(controlClass, "h-10 appearance-none pr-9")}
+                  >
+                    <option value="">
+                      {categories.isLoading ? "Loading categories…" : "Select a category"}
+                    </option>
+                    {categoryRows.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                    {draft.categoryId &&
+                    !categoryRows.some((category) => category.id === draft.categoryId) ? (
+                      <option value={draft.categoryId}>
+                        {loadedBook.data?.category?.name || "Selected category"}
+                      </option>
+                    ) : null}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-neutral-500" />
+                </div>
+                {categories.error instanceof Error ? (
+                  <p className="text-sm text-danger">{categories.error.message}</p>
+                ) : null}
               </Field>
               <Field id="stock-quantity" label="Stock quantity">
                 <input
@@ -292,14 +379,6 @@ export function AddBookPanel({
                 checked={draft.deliveryDispatch}
                 onCheckedChange={(checked) => updateDraft("deliveryDispatch", checked)}
               />
-              {mode === "create" ? (
-                <ToggleRow
-                  title="Bulk purchase"
-                  description="Allow this book to be bought in bulk"
-                  checked={draft.bulkPurchaseAvailable}
-                  onCheckedChange={(checked) => updateDraft("bulkPurchaseAvailable", checked)}
-                />
-              ) : null}
             </div>
           </section>
 
@@ -321,53 +400,78 @@ export function AddBookPanel({
               />
             </div>
             <div className="mt-3 flex flex-col gap-3">
-              {draft.allocations.map((station, index) => (
+              <fieldset className="rounded-xl border border-neutral-200">
+                <legend className="px-2 text-[13px] text-neutral-500">Pickup locations</legend>
+                <div className="max-h-52 overflow-y-auto px-4 py-2">
+                  {pickupLocations.isLoading ? (
+                    <p className="py-2 text-sm text-neutral-500">Loading pickup locations…</p>
+                  ) : null}
+                  {pickupLocations.error instanceof Error ? (
+                    <p className="py-2 text-sm text-danger">{pickupLocations.error.message}</p>
+                  ) : null}
+                  {!pickupLocations.isLoading && locationRows.length === 0 ? (
+                    <p className="py-2 text-sm text-neutral-500">No pickup locations yet.</p>
+                  ) : null}
+                  {[
+                    ...locationRows,
+                    ...draft.allocations
+                      .filter(
+                        (station) =>
+                          station.id && !locationRows.some((location) => location.id === station.id),
+                      )
+                      .map((station) => ({
+                        id: station.id,
+                        locationName: station.name || station.id,
+                        fullAddress: station.address,
+                      })),
+                  ].map((location) => {
+                    const selected = draft.allocations.some((station) => station.id === location.id);
+                    return (
+                      <label
+                        key={location.id}
+                        className="flex cursor-pointer items-start gap-3 py-2"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={(event) => togglePickupLocation(location, event.target.checked)}
+                          className="mt-0.5 size-4 accent-brand"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm text-neutral-900">{location.locationName}</span>
+                          <span className="block text-[13px] text-neutral-400">{location.fullAddress}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+              {draft.allocations.map((station) => (
                 <div
-                  key={`${station.id}-${index}`}
+                  key={station.id}
                   className="flex items-center justify-between gap-4 rounded-xl border border-neutral-200 px-4 py-3"
                 >
-                  <div className="min-w-0 flex-1">
-                    <input
-                      aria-label={`Pickup location ${index + 1}`}
-                      value={station.id}
-                      placeholder="Pickup location ID"
-                      onChange={(event) => updateAllocation(index, { id: event.target.value })}
-                      className={cn(controlClass, "h-10")}
-                    />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-neutral-900">{station.name || station.id}</p>
                     {station.address ? (
-                      <p className="mt-1 text-[13px] text-neutral-400">{station.address}</p>
+                      <p className="mt-0.5 text-[13px] text-neutral-400">{station.address}</p>
                     ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-4">
                     <QuantityField
-                      label={`Allocation ${index + 1} quantity`}
+                      label={`${station.name || "Allocation"} quantity`}
                       value={station.quantity}
-                      onChange={(value) => updateAllocation(index, { quantity: value })}
+                      onChange={(value) => updateAllocation(station.id, { quantity: value })}
                       className="w-[88px]"
                     />
                     <Toggle
-                      label={`Allocation ${index + 1}`}
+                      label={station.name || "Allocation"}
                       checked={station.enabled}
-                      onCheckedChange={(enabled) => updateAllocation(index, { enabled })}
+                      onCheckedChange={(enabled) => updateAllocation(station.id, { enabled })}
                     />
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() =>
-                  setDraft((current) => ({
-                    ...current,
-                    allocations: [
-                      ...current.allocations,
-                      { id: "", name: "", address: "", quantity: "0", enabled: true },
-                    ],
-                  }))
-                }
-                className="self-start text-sm font-medium text-brand"
-              >
-                Add allocation
-              </button>
             </div>
           </section>
         </form>

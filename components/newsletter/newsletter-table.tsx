@@ -10,6 +10,45 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { NewsletterSubscriber } from "@/core/newsletter/types";
+import { cn } from "@/lib/utils";
+
+function SkeletonBar({ className }: { className: string }) {
+  return <span className={cn("block animate-pulse rounded-md bg-neutral-200", className)} />;
+}
+
+export function NewsletterTableSkeleton({ rows = 7 }: { rows?: number }) {
+  return (
+    <Card
+      className="gap-0 overflow-hidden py-0 shadow-none ring-neutral-200/80"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading subscribers</span>
+      <Table>
+        <TableHeader className="bg-[#f7f7f8]">
+          <TableRow className="border-neutral-100 hover:bg-transparent">
+            <TableHead className="h-11 pl-5 text-xs font-medium text-neutral-400">Email</TableHead>
+            <TableHead className="h-11 pr-5 text-right text-xs font-medium text-neutral-400">
+              Date Subscribed
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody className="[&_tr:last-child]:border-b">
+          {Array.from({ length: rows }, (_, index) => (
+            <TableRow key={index} className="border-neutral-100 hover:bg-transparent">
+              <TableCell className="py-5 pl-5">
+                <SkeletonBar className="h-3.5 w-56" />
+              </TableCell>
+              <TableCell className="py-5 pr-5">
+                <SkeletonBar className="ml-auto h-3.5 w-28" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
 
 export function NewsletterTable({ subscribers }: { subscribers: NewsletterSubscriber[] }) {
   return (

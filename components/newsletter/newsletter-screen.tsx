@@ -3,17 +3,18 @@
 import { useState } from "react";
 import { Bell, Plus } from "lucide-react";
 import { BooksPagination } from "@/components/books/books-pagination";
-import { NewsletterTable } from "@/components/newsletter/newsletter-table";
+import { NewsletterTable, NewsletterTableSkeleton } from "@/components/newsletter/newsletter-table";
 import { Button } from "@/components/ui/button";
 import { useNewsletterSubscribers } from "@/features/newsletter/use-newsletter";
 import { defaultNewsletterListParams } from "@/infrastructure/newsletter/newsletter-api";
 
 export function NewsletterScreen() {
   const [page, setPage] = useState(defaultNewsletterListParams.page);
-  const { data } = useNewsletterSubscribers({
+  const subscribers = useNewsletterSubscribers({
     page,
     pageSize: defaultNewsletterListParams.pageSize,
   });
+  const data = subscribers.data;
 
   return (
     <div className="px-5 pt-5 pb-8">
@@ -36,7 +37,9 @@ export function NewsletterScreen() {
         </div>
       </header>
 
-      {data ? (
+      {subscribers.isLoading || !data ? (
+        <NewsletterTableSkeleton rows={defaultNewsletterListParams.pageSize} />
+      ) : (
         <>
           <NewsletterTable subscribers={data.items} />
           <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
@@ -46,7 +49,7 @@ export function NewsletterScreen() {
             <BooksPagination page={data.page} totalPages={data.totalPages} onPageChange={setPage} />
           </div>
         </>
-      ) : null}
+      )}
     </div>
   );
 }
