@@ -1,6 +1,9 @@
 import type { ShippingCountry } from "@/core/dashboard/types";
 
 export function CountryFlag({ code }: { code: ShippingCountry["code"] }) {
+  if (!code) {
+    return <span className="inline-block h-3.5 w-5 rounded-[2px] bg-neutral-200 ring-1 ring-black/10" />;
+  }
   return (
     <span className="inline-flex h-3.5 w-5 overflow-hidden rounded-[2px] ring-1 ring-black/10">
       {code === "US" ? <UnitedStatesFlag /> : null}

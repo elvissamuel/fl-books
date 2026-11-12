@@ -1,8 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BrandMark } from "@/components/brand/brand-mark";
 import { adminNavigation } from "@/components/admin/admin-navigation";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,14 @@ export function AdminSidebar() {
   return (
     <aside className="flex h-dvh w-[232px] shrink-0 flex-col bg-brand text-white">
       <div className="px-5 pt-6 pb-4">
-        <BrandMark tone="light" />
+        <Image
+          src="/AFL-Books-04.png"
+          alt="AFL Books"
+          width={520}
+          height={280}
+          priority
+          className="h-14 w-auto mix-blend-screen"
+        />
       </div>
       <nav className="flex flex-col gap-1 px-3" aria-label="Admin">
         {adminNavigation.map((item) => {

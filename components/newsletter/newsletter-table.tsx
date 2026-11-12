@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { NewsletterSubscriber } from "@/core/newsletter/types";
+import type { NewsletterSubscription } from "@/core/newsletter/private-api";
 import { cn } from "@/lib/utils";
 
 function SkeletonBar({ className }: { className: string }) {
@@ -50,7 +50,13 @@ export function NewsletterTableSkeleton({ rows = 7 }: { rows?: number }) {
   );
 }
 
-export function NewsletterTable({ subscribers }: { subscribers: NewsletterSubscriber[] }) {
+function subscribedOn(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || "—";
+  return date.toLocaleDateString("en-GB");
+}
+
+export function NewsletterTable({ subscribers }: { subscribers: NewsletterSubscription[] }) {
   return (
     <Card className="gap-0 overflow-hidden py-0 shadow-none ring-neutral-200/80">
       <Table>
@@ -74,7 +80,7 @@ export function NewsletterTable({ subscribers }: { subscribers: NewsletterSubscr
             <TableRow key={subscriber.id} className="border-neutral-100 hover:bg-transparent">
               <TableCell className="py-5 pl-5 text-sm text-neutral-800">{subscriber.email}</TableCell>
               <TableCell className="py-5 pr-5 text-right text-sm text-neutral-800">
-                {subscriber.subscribedOn}
+                {subscribedOn(subscriber.createdAt)}
               </TableCell>
             </TableRow>
           ))}

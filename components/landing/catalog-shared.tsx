@@ -16,7 +16,7 @@ export function SectionHeading({
   href: string;
 }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4">
+    <div className="landing-piece mb-6 flex items-end justify-between gap-4">
       <div>
         <h2
           id={id}
@@ -29,7 +29,7 @@ export function SectionHeading({
       </div>
       <a
         href={href}
-        className="mb-0.5 inline-flex items-center gap-0.5 text-[13px] font-medium text-[#9aa1ab] hover:text-brand"
+        className="mb-0.5 inline-flex items-center gap-0.5 text-[13px] font-medium text-[#9aa1ab] transition-colors duration-300 ease-out hover:text-brand"
       >
         See All
         <ChevronRight className="size-3.5" />

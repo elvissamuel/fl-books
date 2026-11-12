@@ -19,7 +19,7 @@ function isCustomerPrivate(path: string[]) {
     path[1] === "private" &&
     (path[2] === "customer" || path[2] === "checkout" || path[2] === "calculate")
   ) {
-    return true;
+    return path[path.length - 1] !== "cancellation";
   }
   return path[0] === "customer" && path[1] === "private" && path[2] !== "admin";
 }
@@ -30,6 +30,10 @@ function isPickupLocationList(path: string[]) {
 
 function isPaymentVerify(path: string[]) {
   return path[0] === "payments" && path[1] === "private" && path[2] === "verify";
+}
+
+function isNewsletterExport(path: string[]) {
+  return path[0] === "newsletter" && path[1] === "private" && path[2] === "export";
 }
 
 async function forward(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
@@ -123,7 +127,7 @@ async function forward(request: NextRequest, context: { params: Promise<{ path: 
     }
   }
 
-  let upstream: { status: number; body: string };
+  let upstream: { status: number; body: Buffer; contentType?: string; contentDisposition?: string };
   try {
     upstream = await requestUpstream(`${baseUrl}${upstreamPath}`, method, headers, body);
   } catch (error) {
@@ -135,7 +139,20 @@ async function forward(request: NextRequest, context: { params: Promise<{ path: 
     );
   }
 
-  const text = upstream.body;
+  if (isNewsletterExport(path) && upstream.status >= 200 && upstream.status < 300) {
+    const responseHeaders = new Headers();
+    responseHeaders.set("Cache-Control", "no-store");
+    responseHeaders.set("Content-Type", upstream.contentType || "application/octet-stream");
+    if (upstream.contentDisposition) {
+      responseHeaders.set("Content-Disposition", upstream.contentDisposition);
+    }
+    return new NextResponse(new Uint8Array(upstream.body), {
+      status: upstream.status,
+      headers: responseHeaders,
+    });
+  }
+
+  const text = upstream.body.toString("utf8");
   const usedAdminSession = isPrivate && !isCustomerPrivate(path) && !clientAuthorization && !usedCustomerSession;
   const tokenRejected = upstream.status === 401 && /expired|invalid|missing token/i.test(text);
   if (tokenRejected && usedCustomerSession) {
@@ -186,7 +203,8 @@ function requestUpstream(url: string, method: string, headers: Headers, body?: A
   const payload = body ? Buffer.from(body) : undefined;
   if (payload) headerRecord["content-length"] = payload.length;
 
-  return new Promise<{ status: number; body: string }>((resolve, reject) => {
+  return new Promise<{ status: number; body: Buffer; contentType?: string; contentDisposition?: string }>(
+    (resolve, reject) => {
     const req = client.request(
       {
         protocol: target.protocol,
@@ -202,9 +220,13 @@ function requestUpstream(url: string, method: string, headers: Headers, body?: A
         const chunks: Buffer[] = [];
         res.on("data", (chunk: Buffer) => chunks.push(chunk));
         res.on("end", () => {
+          const contentType = res.headers["content-type"];
+          const contentDisposition = res.headers["content-disposition"];
           resolve({
             status: res.statusCode ?? 500,
-            body: Buffer.concat(chunks).toString("utf8"),
+            body: Buffer.concat(chunks),
+            contentType: Array.isArray(contentType) ? contentType[0] : contentType,
+            contentDisposition: Array.isArray(contentDisposition) ? contentDisposition[0] : contentDisposition,
           });
         });
       },

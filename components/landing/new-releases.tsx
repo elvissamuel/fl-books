@@ -1,3 +1,4 @@
+import { RevealSection } from "@/components/landing/reveal-section";
 import { SectionHeading } from "@/components/landing/catalog-shared";
 import { NewReleaseRow } from "@/components/landing/new-release-row";
 import type { PublicBook } from "@/core/books/public-api";
@@ -26,7 +27,7 @@ export async function NewReleases() {
   const books = await loadNewReleases();
 
   return (
-    <section className="px-6 py-8 sm:px-10 lg:px-14" aria-labelledby="new-releases">
+    <RevealSection className="px-6 py-8 sm:px-10 lg:px-14" aria-labelledby="new-releases">
       <div className="mx-auto max-w-[1180px]">
         <SectionHeading
           id="new-releases"
@@ -40,6 +41,6 @@ export async function NewReleases() {
         ) : null}
         {books.items.length > 0 ? <NewReleaseRow books={books.items} /> : null}
       </div>
-    </section>
+    </RevealSection>
   );
 }

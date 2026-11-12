@@ -40,10 +40,19 @@ export async function LandingHero() {
             <a
               key={label}
               href={
-                label === "Home" ? "/" : label === "Books" ? "/books" : `#${label.toLowerCase().replace(" ", "-")}`
+                label === "Home"
+                  ? "/"
+                  : label === "Books"
+                    ? "/books"
+                    : label === "Contact Us"
+                      ? "/contact"
+                      : label === "About Author"
+                        ? "/about"
+                        : `#${label.toLowerCase().replace(" ", "-")}`
               }
               className={cn(
                 "text-[13.5px] font-medium",
+                "transition-colors duration-300 ease-out",
                 label === "Home" ? "text-white" : "text-white/75 hover:text-white",
               )}
             >
@@ -61,7 +70,7 @@ export async function LandingHero() {
           ) : (
             <a
               href="/login"
-              className="inline-flex h-9 items-center rounded-md bg-brand px-4 text-[13px] font-medium text-white hover:bg-brand-hover"
+              className="inline-flex h-9 items-center rounded-md bg-brand px-4 text-[13px] font-medium text-white transition-colors duration-300 ease-out hover:bg-brand-hover"
             >
               Sign In
             </a>
@@ -82,11 +91,11 @@ export async function LandingHero() {
           <div className="mt-6 flex items-center gap-5">
             <a
               href="#collection"
-              className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-[13.5px] font-medium text-white hover:bg-brand-hover"
+              className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-[13.5px] font-medium text-white transition-colors duration-300 ease-out hover:bg-brand-hover"
             >
               Explore the Collection
             </a>
-            <a href="#learn-more" className="text-[13.5px] font-medium text-white/90 hover:text-white">
+            <a href="#learn-more" className="text-[13.5px] font-medium text-white/90 transition-colors duration-300 ease-out hover:text-white">
               Learn More
             </a>
           </div>
@@ -146,7 +155,12 @@ function BookShot({
   priority?: boolean;
 }) {
   return (
-    <div className={cn("relative drop-shadow-[0_22px_30px_rgba(0,0,0,0.5)]", className)}>
+    <div
+      className={cn(
+        "relative drop-shadow-[0_22px_30px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-out hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        className,
+      )}
+    >
       <Image
         src={src}
         alt={alt}

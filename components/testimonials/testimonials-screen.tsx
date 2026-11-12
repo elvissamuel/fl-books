@@ -19,7 +19,7 @@ import {
 
 const pageSize = 7;
 
-export function TestimonialsScreen() {
+export function TestimonialsScreen({ embedded = false }: { embedded?: boolean }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [panel, setPanel] = useState<
@@ -75,9 +75,11 @@ export function TestimonialsScreen() {
   }
 
   return (
-    <div className="px-5 pt-5 pb-8">
-      <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Testimonials</h1>
+    <div className={embedded ? undefined : "px-5 pt-5 pb-8"}>
+      <header className={embedded ? "mb-4 flex justify-end" : "mb-4 flex items-center justify-between gap-4"}>
+        {embedded ? null : (
+          <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Testimonials</h1>
+        )}
         <div className="flex items-center gap-3">
           <Button
             type="button"
@@ -90,15 +92,17 @@ export function TestimonialsScreen() {
             <Plus className="size-4" />
             Add Testimony
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-            aria-label="Notifications"
-          >
-            <Bell className="size-4" strokeWidth={1.75} />
-          </Button>
+          {embedded ? null : (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
+              aria-label="Notifications"
+            >
+              <Bell className="size-4" strokeWidth={1.75} />
+            </Button>
+          )}
         </div>
       </header>
 

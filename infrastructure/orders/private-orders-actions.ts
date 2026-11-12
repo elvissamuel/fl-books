@@ -5,9 +5,13 @@ import type {
   CheckoutOrderRequest,
   CheckoutOrderResult,
   OrderCalculation,
+  CancelOrderRequest,
+  FulfilmentStatusResult,
+  OrderCancellation,
   OrderFilterRequest,
   PaginatedOrders,
   PrivateOrder,
+  UpdateFulfilmentStatusRequest,
 } from "@/core/orders/private-api";
 import { browserApi, setQuery, withSearch } from "@/infrastructure/http/browser-api";
 
@@ -17,7 +21,11 @@ const filter = "/api/v1/orders/private/filter";
 const calculate = "/api/v1/orders/private/calculate";
 const list = "/api/v1/orders/private";
 const byId = (orderId: string) => `/api/v1/orders/private/${encodeURIComponent(orderId)}`;
+const fulfilmentStatus = (orderId: string) =>
+  `/api/v1/orders/private/${encodeURIComponent(orderId)}/fulfilment-status`;
 const customerList = "/api/v1/orders/private/customer";
+const cancellation = (orderId: string) =>
+  `/api/v1/orders/private/customer/${encodeURIComponent(orderId)}/cancellation`;
 const customerById = (orderId: string) =>
   `/api/v1/orders/private/customer/${encodeURIComponent(orderId)}`;
 
@@ -32,6 +40,7 @@ function listSearch(query: OrderFilterRequest) {
   setQuery(search, "pickUpLocationId", query.pickUpLocationId?.trim());
   setQuery(search, "paymentStatus", query.paymentStatus);
   setQuery(search, "logisticsType", query.logisticsType);
+  setQuery(search, "fulfilmentStatus", query.fulfilmentStatus);
   setQuery(search, "paymentProvider", query.paymentProvider?.trim());
   setQuery(search, "paymentReference", query.paymentReference?.trim());
   setQuery(search, "createdFrom", query.createdFrom?.trim());
@@ -65,6 +74,20 @@ export async function listPrivateOrders(query: OrderFilterRequest) {
 
 export async function getPrivateOrder(orderId: string) {
   return browserApi<PrivateOrder>(byId(orderId));
+}
+
+export async function updateOrderFulfilmentStatus(
+  orderId: string,
+  request: UpdateFulfilmentStatusRequest,
+) {
+  return browserApi<FulfilmentStatusResult>(fulfilmentStatus(orderId), {
+    method: "PATCH",
+    json: request,
+  });
+}
+
+export async function cancelPrivateOrder(orderId: string, request: CancelOrderRequest) {
+  return browserApi<OrderCancellation>(cancellation(orderId), { method: "POST", json: request });
 }
 
 export async function listCustomerOrders(query: OrderFilterRequest) {

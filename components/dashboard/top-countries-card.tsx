@@ -3,15 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CountryFlag } from "@/components/dashboard/country-flag";
-import { useShippingCountries } from "@/features/dashboard/use-dashboard";
+import type { ShippingSummary } from "@/core/dashboard/types";
 
-export function TopCountriesCard() {
-  const { data } = useShippingCountries();
-
-  if (!data) {
-    return null;
-  }
-
+export function TopCountriesCard({ summary }: { summary: ShippingSummary }) {
   return (
     <Card className="gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-neutral-200/80">
       <CardHeader>
@@ -21,8 +15,11 @@ export function TopCountriesCard() {
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <ul className="flex flex-col gap-3">
-          {data.countries.map((country) => (
-            <li key={country.code} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 text-[13px]">
+          {summary.countries.length === 0 ? (
+            <li className="text-[13px] text-neutral-500">No shipping countries in this period.</li>
+          ) : null}
+          {summary.countries.map((country) => (
+            <li key={country.name} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 text-[13px]">
               <span className="flex min-w-0 items-center gap-2 text-neutral-700">
                 <CountryFlag code={country.code} />
                 <span className="truncate">{country.name}</span>
@@ -35,8 +32,8 @@ export function TopCountriesCard() {
         <Separator />
         <div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 text-[13px] font-semibold text-neutral-900">
           <span>Total</span>
-          <span className="w-8 text-right tabular-nums">{data.totalOrders}</span>
-          <span className="w-10 text-right tabular-nums">{data.totalShareLabel}</span>
+          <span className="w-8 text-right tabular-nums">{summary.totalOrders}</span>
+          <span className="w-10 text-right tabular-nums">{summary.totalShareLabel}</span>
         </div>
       </CardContent>
     </Card>

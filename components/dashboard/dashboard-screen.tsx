@@ -1,10 +1,6 @@
 import { Bell, LogOut } from "lucide-react";
 import { logoutAdmin } from "@/app/admin/(protected)/logout-action";
-import { FulfillmentCard } from "@/components/dashboard/fulfillment-card";
-import { RecentOrdersCard } from "@/components/dashboard/recent-orders-card";
-import { RevenueTrendCard } from "@/components/dashboard/revenue-trend-card";
-import { StatsGrid } from "@/components/dashboard/stats-grid";
-import { TopCountriesCard } from "@/components/dashboard/top-countries-card";
+import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { Button } from "@/components/ui/button";
 
 export function DashboardScreen() {
@@ -34,17 +30,7 @@ export function DashboardScreen() {
           </Button>
         </div>
       </header>
-      <div className="flex flex-col gap-4">
-        <StatsGrid />
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.86fr)]">
-          <RevenueTrendCard />
-          <div className="flex flex-col gap-4">
-            <FulfillmentCard />
-            <TopCountriesCard />
-          </div>
-        </div>
-        <RecentOrdersCard />
-      </div>
+      <DashboardOverview />
     </div>
   );
 }

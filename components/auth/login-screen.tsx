@@ -1,20 +1,27 @@
-import { BrandMark } from "@/components/brand/brand-mark";
+import Image from "next/image";
+import Link from "next/link";
+import { X } from "lucide-react";
 import { LoginForm } from "@/components/auth/login-form";
+import { ptSerif } from "@/lib/public-font";
 
 export function LoginScreen() {
   return (
-    <div className="relative min-h-dvh bg-background">
-      <div className="absolute top-7 left-8 sm:top-8 sm:left-10">
-        <BrandMark />
+    <main className={`${ptSerif.className} relative flex min-h-dvh items-center justify-center bg-[#0c0e10] p-4`}>
+      <Image src="/hero-bg.png" alt="" fill priority sizes="100vw" className="object-cover" />
+      <div className="absolute inset-0 bg-black/55" />
+      <div className="relative grid w-full max-w-[820px] overflow-hidden rounded-[20px] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] md:grid-cols-2">
+        <LoginForm />
+        <div className="relative hidden min-h-[460px] md:block">
+          <Image src="/login-bg.png" alt="" fill sizes="410px" className="object-cover" />
+          <Link
+            href="/"
+            aria-label="Close"
+            className="absolute top-3 right-3 inline-flex size-8 items-center justify-center rounded-md bg-white text-[#1c1f24] shadow-sm"
+          >
+            <X className="size-4" />
+          </Link>
+        </div>
       </div>
-      <main className="flex min-h-dvh items-center justify-center px-4 py-24">
-        <section className="w-full max-w-[28rem] rounded-[1.35rem] bg-surface px-8 py-10 shadow-[0_10px_40px_rgba(17,17,17,0.04)] sm:px-10 sm:py-12">
-          <h1 className="text-center text-[1.35rem] font-bold tracking-tight text-neutral-950">
-            let&apos;s get you started.
-          </h1>
-          <LoginForm />
-        </section>
-      </main>
-    </div>
+    </main>
   );
 }
