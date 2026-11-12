@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ReferenceLine, XAxis, YAxis } from "recharts";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { formatNaira, formatThousands } from "@/core/dashboard/format";
-import type { RevenuePeriod } from "@/core/dashboard/types";
-import { useRevenueTrend } from "@/features/dashboard/use-dashboard";
+import type { RevenuePeriod, RevenueTrend } from "@/core/dashboard/types";
 import { cn } from "@/lib/utils";
 
 const chartConfig = {
@@ -21,10 +19,34 @@ const periods: { id: RevenuePeriod; label: string }[] = [
   { id: "monthly", label: "Monthly" },
 ];
 
-export function RevenueTrendCard() {
-  const [period, setPeriod] = useState<RevenuePeriod>("monthly");
-  const { data } = useRevenueTrend(period);
-  const highlight = data?.points.find((point) => point.highlighted);
+function axisFor(points: { revenue: number }[]) {
+  const max = Math.max(0, ...points.map((point) => point.revenue));
+  if (max <= 0) return { domain: [0, 4] as [number, number], ticks: [0, 1, 2, 3, 4], floor: 0 };
+  const rough = (max * 1.2) / 4;
+  const power = 10 ** Math.floor(Math.log10(rough));
+  const scaled = rough / power;
+  const nice = scaled <= 1 ? 1 : scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10;
+  const step = nice * power;
+  const top = step * 4;
+  return { domain: [0, top] as [number, number], ticks: [0, step, step * 2, step * 3, top], floor: 0 };
+}
+
+function formatAxis(value: number) {
+  if (Math.abs(value) >= 1000) return formatThousands(value);
+  return value.toLocaleString("en-US");
+}
+
+export function RevenueTrendCard({
+  period,
+  trend,
+  onPeriodChange,
+}: {
+  period: RevenuePeriod;
+  trend: RevenueTrend;
+  onPeriodChange: (period: RevenuePeriod) => void;
+}) {
+  const highlight = trend.points.find((point) => point.highlighted);
+  const axis = axisFor(trend.points);
 
   return (
     <Card className="h-full gap-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-neutral-200/80">
@@ -41,7 +63,7 @@ export function RevenueTrendCard() {
                   key={option.id}
                   type="button"
                   aria-pressed={selected}
-                  onClick={() => setPeriod(option.id)}
+                  onClick={() => onPeriodChange(option.id)}
                   className={cn(
                     "rounded-md px-3 py-1 text-xs font-medium",
                     selected
@@ -57,13 +79,13 @@ export function RevenueTrendCard() {
         </CardAction>
       </CardHeader>
       <CardContent className="pt-0">
-        {data ? (
+        {trend.points.length > 0 ? (
           <ChartContainer
             config={chartConfig}
             initialDimension={{ width: 640, height: 260 }}
             className="aspect-auto h-[268px] w-full"
           >
-            <LineChart data={data.points} margin={{ top: 46, right: 8, left: 0, bottom: 0 }}>
+            <LineChart data={trend.points} margin={{ top: 46, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="#ececec" strokeDasharray="4 4" />
               <XAxis
                 dataKey="label"
@@ -76,16 +98,16 @@ export function RevenueTrendCard() {
                 axisLine={false}
                 tickLine={false}
                 width={42}
-                domain={[12000, 108000]}
-                ticks={[20000, 40000, 60000, 80000, 100000]}
-                tickFormatter={formatThousands}
+                domain={axis.domain}
+                ticks={axis.ticks}
+                tickFormatter={formatAxis}
                 tick={{ fontSize: 11, fill: "#9ca3af" }}
               />
               {highlight ? (
                 <ReferenceLine
                   segment={[
                     { x: highlight.label, y: highlight.revenue },
-                    { x: highlight.label, y: 12000 },
+                    { x: highlight.label, y: axis.floor },
                   ]}
                   stroke="#e5e7eb"
                   strokeWidth={1}
@@ -119,7 +141,11 @@ export function RevenueTrendCard() {
               ) : null}
             </LineChart>
           </ChartContainer>
-        ) : null}
+        ) : (
+          <p className="flex h-[268px] items-center justify-center text-sm text-neutral-500">
+            No revenue in this period.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

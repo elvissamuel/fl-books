@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { RevealSection } from "@/components/landing/reveal-section";
+import { NewsletterSubscribeForm } from "@/components/landing/newsletter-subscribe-form";
 
 const shopLinks = ["All Books", "Bestsellers", "New Releases"] as const;
 const supportLinks = ["Contact Us", "Shipping Policy", "Refunds", "Terms & Privacy"] as const;
@@ -8,7 +10,7 @@ const supportLinks = ["Contact Us", "Shipping Policy", "Refunds", "Terms & Priva
 export function LandingFooter() {
   return (
     <div>
-      <section className="relative isolate overflow-hidden text-white" aria-labelledby="contact-band">
+      <RevealSection className="relative isolate overflow-hidden text-white" aria-labelledby="contact-band">
         <Image
           src="/landing/contact-banner.png"
           alt=""
@@ -17,7 +19,7 @@ export function LandingFooter() {
           className="object-cover object-center blur-2xl scale-125"
         />
         <div className="absolute inset-0 bg-black/55" />
-        <div className="relative mx-auto flex max-w-[1180px] flex-col gap-8 px-6 py-14 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-14 lg:py-16">
+        <div className="landing-stagger relative mx-auto flex max-w-[1180px] flex-col gap-8 px-6 py-14 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-14 lg:py-16">
           <div className="max-w-[460px]">
             <h2 id="contact-band" className="text-[28px] leading-tight font-semibold tracking-[-0.03em] sm:text-[32px]">
               Have A Question? We&apos;d Love To Hear From You
@@ -27,38 +29,15 @@ export function LandingFooter() {
               one message away.
             </p>
             <a
-              href="#contact"
-              className="mt-6 inline-flex h-11 items-center rounded-lg bg-[#f47832] px-5 text-[14px] font-medium text-white hover:bg-[#e56d28]"
+              href="/contact"
+              className="mt-6 inline-flex h-11 items-center rounded-lg bg-[#f47832] px-5 text-[14px] font-medium text-white transition-colors duration-300 ease-out hover:bg-[#e56d28]"
             >
               Contact Us
             </a>
           </div>
-          <form
-            id="contact"
-            className="w-full max-w-[440px] rounded-[22px] bg-[#ffe5da] p-6 text-[#1c1f24] sm:p-7"
-          >
-            <h3 className="text-[18px] font-semibold">Subscribe to Our Newsletter</h3>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <label className="sr-only" htmlFor="newsletter-email">
-                Email address
-              </label>
-              <input
-                id="newsletter-email"
-                type="email"
-                name="email"
-                placeholder="Enter your email address"
-                className="h-11 min-w-0 flex-1 rounded-full bg-white px-4 text-[13.5px] text-[#1c1f24] outline-none placeholder:text-[#b0b6bf]"
-              />
-              <button
-                type="button"
-                className="h-11 shrink-0 rounded-full bg-[#f47832] px-5 text-[13.5px] font-medium text-white hover:bg-[#e56d28]"
-              >
-                Subscribe
-              </button>
-            </div>
-          </form>
+          <NewsletterSubscribeForm />
         </div>
-      </section>
+      </RevealSection>
 
       <footer className="bg-[#111116] text-white">
         <div className="mx-auto grid max-w-[1180px] gap-10 px-6 py-12 sm:px-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr] lg:px-14">
@@ -110,8 +89,10 @@ function FooterColumn({ title, links }: { title: string; links: readonly string[
         {links.map((label) => (
           <li key={label}>
             <a
-              href={label === "All Books" ? "/books" : `#${label.toLowerCase().replace(/[^a-z]+/g, "-")}`}
-              className="text-[13.5px] text-white/65 hover:text-white"
+              href={
+                label === "All Books" ? "/books" : label === "Contact Us" ? "/contact" : `#${label.toLowerCase().replace(/[^a-z]+/g, "-")}`
+              }
+              className="text-[13.5px] text-white/65 transition-colors duration-300 ease-out hover:text-white"
             >
               {label}
             </a>
@@ -124,7 +105,7 @@ function FooterColumn({ title, links }: { title: string; links: readonly string[
 
 function SocialIcon({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <a href={`#${label.toLowerCase()}`} aria-label={label} className="text-white/75 hover:text-white">
+    <a href={`#${label.toLowerCase()}`} aria-label={label} className="text-white/75 transition-colors duration-300 ease-out hover:text-white">
       <svg viewBox="0 0 24 24" className="size-[18px]" aria-hidden="true" fill="currentColor">
         {children}
       </svg>

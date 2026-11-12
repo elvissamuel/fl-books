@@ -10,9 +10,13 @@ export function StatCard({ stat }: { stat: DashboardStat }) {
         <p className="text-[1.65rem] leading-none font-semibold tracking-tight text-neutral-950 tabular-nums">
           {formatStatValue(stat)}
         </p>
-        <p className="text-xs font-medium text-[#1f9d55]">
-          {formatTrend(stat.trendPercent)}
-        </p>
+        {stat.trendPercent == null ? null : (
+          <p
+            className={`text-xs font-medium ${stat.trendPercent < 0 ? "text-rose-500" : "text-[#1f9d55]"}`}
+          >
+            {formatTrend(stat.trendPercent)}
+          </p>
+        )}
       </CardContent>
     </Card>
   );

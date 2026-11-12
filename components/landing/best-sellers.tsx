@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { RevealSection } from "@/components/landing/reveal-section";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { SectionHeading, StarRating } from "@/components/landing/catalog-shared";
 import type { PublicBook } from "@/core/books/public-api";
@@ -30,7 +31,7 @@ export async function BestSellers() {
   const books = await loadBestSellers();
 
   return (
-    <section className="px-6 pt-6 pb-16 sm:px-10 lg:px-14" aria-labelledby="best-sellers">
+    <RevealSection className="px-6 pt-6 pb-16 sm:px-10 lg:px-14" aria-labelledby="best-sellers">
       <div className="mx-auto max-w-[1180px]">
         <SectionHeading
           id="best-sellers"
@@ -42,13 +43,13 @@ export async function BestSellers() {
         {!books.error && books.items.length === 0 ? (
           <p className="text-sm text-[#8d939c]">No books to show yet.</p>
         ) : null}
-        <div id="best-seller-list" className="grid items-stretch gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div id="best-seller-list" className="landing-stagger grid items-stretch gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           {books.items.map((book) => {
             const cover = book.coverImageUrls.find((url) => url.startsWith("https://"));
             return (
               <article
                 key={book.id}
-                className="flex h-full flex-col items-center border bg-white px-4 py-4 text-center"
+                className="group flex h-full flex-col items-center border bg-white px-4 py-4 text-center transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,24,40,0.08)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
                 <div className="relative aspect-[3/4] w-[78%] shrink-0">
                   {cover ? (
@@ -57,7 +58,7 @@ export async function BestSellers() {
                       alt={book.title}
                       fill
                       sizes="280px"
-                      className="object-contain"
+                      className="object-contain transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                     />
                   ) : null}
                 </div>
@@ -74,7 +75,7 @@ export async function BestSellers() {
                   <p className="text-[15px] font-semibold text-[#f47832]">{naira(book.price)}</p>
                   <AddToCartButton
                     bookId={book.id}
-                    className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#f47832] text-[13.5px] font-medium text-white hover:bg-[#e56d28] disabled:opacity-60"
+                    className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#f47832] text-[13.5px] font-medium text-white transition-colors duration-300 ease-out hover:bg-[#e56d28] disabled:opacity-60"
                   />
                 </div>
               </article>
@@ -82,6 +83,6 @@ export async function BestSellers() {
           })}
         </div>
       </div>
-    </section>
+    </RevealSection>
   );
 }

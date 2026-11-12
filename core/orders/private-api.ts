@@ -10,7 +10,29 @@ import type {
 } from "@/core/payments/private-api";
 import type { PickupLocation } from "@/core/pickup-stations/private-api";
 
-export const logisticsTypes = ["DELIVERY", "PICKUP", "PICK_UP"] as const;
+export const fulfilmentStatuses = [
+  "ORDER_PLACED",
+  "PACKAGING",
+  "SHIPPED",
+  "IN_TRANSIT",
+  "READY_FOR_PICKUP",
+  "READY_FOR_DELIVERY",
+  "DELIVERED",
+] as const;
+
+export type FulfilmentStatus = (typeof fulfilmentStatuses)[number];
+
+export const deliveryStatuses = [
+  "PACKAGING",
+  "SHIPPED",
+  "IN_TRANSIT",
+  "READY_FOR_PICKUP",
+  "DELIVERED",
+] as const;
+
+export type DeliveryStatus = (typeof deliveryStatuses)[number];
+
+export const logisticsTypes = ["DELIVERY", "PICKUP", "PICK_UP", ...deliveryStatuses] as const;
 
 export type LogisticsType = (typeof logisticsTypes)[number];
 
@@ -23,6 +45,7 @@ export type OrderFilterRequest = {
   pickUpLocationId?: string;
   paymentStatus?: PaymentStatus;
   logisticsType?: LogisticsType;
+  fulfilmentStatus?: FulfilmentStatus;
   paymentProvider?: string;
   paymentReference?: string;
   createdFrom?: string;
@@ -48,6 +71,33 @@ export type CalculateOrderRequest = {
   orderId: string;
   pickUpDeliveryLocationId: string;
   logisticsType: LogisticsType;
+};
+
+export type UpdateFulfilmentStatusRequest = {
+  status: FulfilmentStatus;
+};
+
+export type FulfilmentStatusResult = {
+  orderId: string;
+  fulfilmentStatus: FulfilmentStatus;
+  updatedAt: string;
+};
+
+export type CancelOrderRequest = {
+  reason: string;
+};
+
+export type OrderCancellation = {
+  orderId: string;
+  orderReference: string;
+  fulfilmentStatus: FulfilmentStatus;
+  cancellationStatus: string;
+  reason: string;
+  requestedByUserId: string;
+  requestedAt: string;
+  reviewedByUserId: string;
+  reviewedAt: string;
+  stockRestoredAt: string;
 };
 
 export type OrderCalculation = {
@@ -96,10 +146,12 @@ export type OrderPaymentSummary = {
 
 export type PrivateOrder = {
   id: string;
+  orderReference: string | null;
   userId: string;
   user: PaymentUser;
   paymentStatus: PaymentStatus;
   logisticsType: LogisticsType;
+  fulfilmentStatus?: FulfilmentStatus | null;
   pickUpLocationId: string;
   recipientName: string;
   recipientPhone: string;
@@ -130,6 +182,16 @@ export interface PrivateOrdersApi {
   calculate(request: CalculateOrderRequest, accessToken: string): Promise<ApiResponse<OrderCalculation>>;
   list(query: OrderFilterRequest, accessToken: string): Promise<ApiResponse<PaginatedOrders>>;
   get(orderId: string, accessToken: string): Promise<ApiResponse<PrivateOrder>>;
+  updateFulfilmentStatus(
+    orderId: string,
+    request: UpdateFulfilmentStatusRequest,
+    accessToken: string,
+  ): Promise<ApiResponse<FulfilmentStatusResult>>;
+  cancel(
+    orderId: string,
+    request: CancelOrderRequest,
+    accessToken: string,
+  ): Promise<ApiResponse<OrderCancellation>>;
   listCustomer(query: OrderFilterRequest, accessToken: string): Promise<ApiResponse<PaginatedOrders>>;
   getCustomer(orderId: string, accessToken: string): Promise<ApiResponse<PrivateOrder>>;
 }

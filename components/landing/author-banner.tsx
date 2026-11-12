@@ -1,9 +1,11 @@
 import Image from "next/image";
+import { RevealSection } from "@/components/landing/reveal-section";
 
 export function AuthorBanner() {
   return (
-    <section
-      className="relative isolate flex min-h-[380px] items-center justify-center overflow-hidden bg-[#101412] text-white sm:min-h-[460px]"
+    <RevealSection
+      id="learn-more"
+      className="relative isolate flex min-h-[380px] scroll-mt-8 items-center justify-center overflow-hidden bg-[#101412] text-white sm:min-h-[460px]"
       aria-labelledby="author-banner"
     >
       <Image
@@ -14,7 +16,7 @@ export function AuthorBanner() {
         className="object-cover object-[center_22%]"
       />
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative z-10 mx-auto flex max-w-[760px] flex-col items-center px-6 py-16 text-center">
+      <div className="landing-stagger relative z-10 mx-auto flex max-w-[760px] flex-col items-center px-6 py-16 text-center">
         <h2
           id="author-banner"
           className="text-[30px] font-semibold tracking-[-0.03em] text-white sm:text-[40px]"
@@ -26,12 +28,12 @@ export function AuthorBanner() {
           them with practical wisdom for faith, leadership, growth, and purposeful living.
         </p>
         <a
-          href="#about-author"
-          className="mt-6 inline-flex h-10 items-center rounded-md bg-brand px-5 text-[14px] font-medium text-white hover:bg-brand-hover"
+          href="/about"
+          className="mt-6 inline-flex h-10 items-center rounded-md bg-brand px-5 text-[14px] font-medium text-white transition-colors duration-300 ease-out hover:bg-brand-hover"
         >
           Meet The Author
         </a>
       </div>
-    </section>
+    </RevealSection>
   );
 }

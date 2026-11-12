@@ -24,17 +24,23 @@ export function NewReleaseRow({ books }: { books: PublicBook[] }) {
         id="new-releases-list"
         className="overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
-        <div className="flex gap-5">
+        <div className="landing-stagger flex gap-5">
           {books.map((book) => {
             const cover = coverSrc(book.coverImageUrls);
             return (
               <article
                 key={book.id}
-                className="flex w-[88%] shrink-0 gap-4 rounded-[18px] bg-white p-4 shadow-[0_10px_28px_rgba(20,24,40,0.06)] sm:w-[46%]"
+                className="group flex w-[88%] shrink-0 gap-4 rounded-[18px] bg-white p-4 shadow-[0_10px_28px_rgba(20,24,40,0.06)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_16px_34px_rgba(20,24,40,0.1)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:w-[46%]"
               >
                 <div className="relative h-[228px] w-[168px] shrink-0 overflow-hidden rounded-xl bg-[#f4f6f8]">
                   {cover ? (
-                    <Image src={cover} alt={book.title} fill sizes="250px" className="object-contain p-2" />
+                    <Image
+                      src={cover}
+                      alt={book.title}
+                      fill
+                      sizes="250px"
+                      className="object-contain p-2 transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                    />
                   ) : null}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col py-1">
@@ -50,7 +56,7 @@ export function NewReleaseRow({ books }: { books: PublicBook[] }) {
                     <button
                       type="button"
                       onClick={() => setBookId(book.id)}
-                      className="mt-3 inline-flex h-9 items-center rounded-lg bg-[#f47832] px-4 text-[13.5px] font-medium text-white hover:bg-[#e56d28]"
+                      className="mt-3 inline-flex h-9 items-center rounded-lg bg-[#f47832] px-4 text-[13.5px] font-medium text-white transition-colors duration-300 ease-out hover:bg-[#e56d28]"
                     >
                       Preview
                     </button>

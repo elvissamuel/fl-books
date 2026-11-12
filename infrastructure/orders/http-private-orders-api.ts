@@ -10,9 +10,13 @@ export const privateOrderEndpoints = {
   calculate: "/api/v1/orders/private/calculate",
   list: "/api/v1/orders/private",
   byId: (orderId: string) => `/api/v1/orders/private/${encodeURIComponent(orderId)}`,
+  fulfilmentStatus: (orderId: string) =>
+    `/api/v1/orders/private/${encodeURIComponent(orderId)}/fulfilment-status`,
   customerList: "/api/v1/orders/private/customer",
   customerById: (orderId: string) =>
     `/api/v1/orders/private/customer/${encodeURIComponent(orderId)}`,
+  cancellation: (orderId: string) =>
+    `/api/v1/orders/private/customer/${encodeURIComponent(orderId)}/cancellation`,
 } as const;
 
 function withAccessToken(accessToken: string, init?: RequestInit): RequestInit {
@@ -45,6 +49,7 @@ function listSearch(query: OrderFilterRequest) {
   setQuery(search, "pickUpLocationId", query.pickUpLocationId?.trim());
   setQuery(search, "paymentStatus", query.paymentStatus);
   setQuery(search, "logisticsType", query.logisticsType);
+  setQuery(search, "fulfilmentStatus", query.fulfilmentStatus);
   setQuery(search, "paymentProvider", query.paymentProvider?.trim());
   setQuery(search, "paymentReference", query.paymentReference?.trim());
   setQuery(search, "createdFrom", query.createdFrom?.trim());
@@ -104,6 +109,26 @@ export const privateOrdersApi: PrivateOrdersApi = {
 
   get(orderId, accessToken) {
     return apiJson(privateOrderEndpoints.byId(orderId), withAccessToken(accessToken));
+  },
+
+  updateFulfilmentStatus(orderId, request, accessToken) {
+    return apiJson(
+      privateOrderEndpoints.fulfilmentStatus(orderId),
+      withAccessToken(accessToken, {
+        method: "PATCH",
+        body: JSON.stringify(request),
+      }),
+    );
+  },
+
+  cancel(orderId, request, accessToken) {
+    return apiJson(
+      privateOrderEndpoints.cancellation(orderId),
+      withAccessToken(accessToken, {
+        method: "POST",
+        body: JSON.stringify(request),
+      }),
+    );
   },
 
   listCustomer(query, accessToken) {

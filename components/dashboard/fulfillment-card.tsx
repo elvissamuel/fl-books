@@ -3,16 +3,14 @@
 import { Store, Truck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FulfillmentSlice } from "@/core/dashboard/types";
-import { useFulfillment } from "@/features/dashboard/use-dashboard";
 
 const tones = {
   delivery: "bg-[#f5a524]",
   pickup: "bg-[#3caf6e]",
+  unknown: "bg-neutral-300",
 } as const;
 
-export function FulfillmentCard() {
-  const { data } = useFulfillment();
-
+export function FulfillmentCard({ slices }: { slices: FulfillmentSlice[] }) {
   return (
     <Card className="gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-neutral-200/80">
       <CardHeader>
@@ -21,7 +19,7 @@ export function FulfillmentCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {data?.map((slice) => (
+        {slices.map((slice) => (
           <FulfillmentRow key={slice.id} slice={slice} />
         ))}
       </CardContent>
@@ -30,7 +28,7 @@ export function FulfillmentCard() {
 }
 
 function FulfillmentRow({ slice }: { slice: FulfillmentSlice }) {
-  const Icon = slice.id === "delivery" ? Truck : Store;
+  const Icon = slice.id === "delivery" ? Truck : slice.id === "pickup" ? Store : Store;
 
   return (
     <div>

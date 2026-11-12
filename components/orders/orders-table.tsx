@@ -1,9 +1,15 @@
 "use client";
 
-import { Eye } from "lucide-react";
+import { Eye, MoreVertical, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -12,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { PrivateOrder } from "@/core/orders/private-api";
+import type { FulfilmentStatus, PrivateOrder } from "@/core/orders/private-api";
 import { cn } from "@/lib/utils";
 
 function customerName(order: PrivateOrder) {
@@ -24,37 +30,42 @@ function customerEmail(order: PrivateOrder) {
   return order.user?.emailAddress || "—";
 }
 
+const logisticsLabels: Record<string, string> = {
+  PICK_UP: "Pickup",
+  PICKUP: "Pickup",
+  DELIVERY: "Delivery",
+  PACKAGING: "Packaging",
+  SHIPPED: "Shipped",
+  IN_TRANSIT: "In Transit",
+  READY_FOR_PICKUP: "Ready for Pickup",
+  DELIVERED: "Delivered",
+};
+
 function logisticsLabel(order: PrivateOrder) {
-  if (order.logisticsType === "PICK_UP" || order.logisticsType === "PICKUP") return "Pickup";
-  if (order.logisticsType === "DELIVERY") return "Delivery";
-  return "—";
+  return logisticsLabels[order.logisticsType] ?? "—";
 }
 
-function bookLabel(order: PrivateOrder) {
-  const books = order.books ?? [];
-  if (books.length === 0) return "—";
-  if (books.length === 1) return books[0]?.title || "—";
-  return `${books[0]?.title || "Book"} +${books.length - 1}`;
-}
+const fulfilmentStatusLabels: Record<FulfilmentStatus, string> = {
+  ORDER_PLACED: "Order Placed",
+  PACKAGING: "Packaging",
+  SHIPPED: "Shipped",
+  IN_TRANSIT: "In Transit",
+  READY_FOR_PICKUP: "Ready for Pickup",
+  READY_FOR_DELIVERY: "Ready for Delivery",
+  DELIVERED: "Delivered",
+};
 
-function orderQuantity(order: PrivateOrder) {
-  return (order.books ?? []).reduce((sum, book) => sum + (book.quantity || 0), 0);
-}
-
-function statusLabel(status: string | undefined) {
+function fulfilmentLabel(status: string | null | undefined) {
   if (!status) return "—";
-  return status.charAt(0) + status.slice(1).toLowerCase();
+  return fulfilmentStatusLabels[status as FulfilmentStatus] ?? status;
 }
 
-function statusClass(status: string | undefined) {
+function statusClass(status: string | null | undefined) {
   const value = status?.toUpperCase();
-  if (value === "SUCCESS" || value === "DELIVERED" || value === "PAID") {
+  if (value === "DELIVERED") {
     return "border-[#b7e4c7] bg-[#f3fbf6] text-[#3caf6e]";
   }
-  if (value === "FAILED" || value === "CANCELLED" || value === "CANCELED") {
-    return "border-[#f5c2c2] bg-[#fff6f6] text-[#e35d6a]";
-  }
-  if (value === "SHIPPED" || value === "PENDING") {
+  if (value === "SHIPPED" || value === "IN_TRANSIT" || value === "READY_FOR_PICKUP" || value === "READY_FOR_DELIVERY") {
     return "border-[#e6d3a1] bg-[#fbf8f1] text-[#c6a15a]";
   }
   return "border-neutral-200 bg-[#f7f7f8] text-neutral-400";
@@ -67,14 +78,13 @@ function formatMoney(amount: number | undefined, currencyCode: string | undefine
 }
 
 const headings = [
+  "Order ID",
   "Customer name",
   "Email",
-  "Type",
+  "Logistics Type",
   "Amount",
-  "Book type",
   "Price",
-  "Qty",
-  "Status",
+  "Fulfilment Status",
   "Action",
 ];
 
@@ -82,7 +92,7 @@ function SkeletonBar({ className }: { className: string }) {
   return <span className={cn("block animate-pulse rounded-md bg-neutral-200", className)} />;
 }
 
-const skeletonWidths = ["w-32", "w-40", "w-16", "w-16", "w-20", "w-16", "w-8"] as const;
+const skeletonWidths = ["w-28", "w-32", "w-40", "w-20", "w-16", "w-16"] as const;
 
 export function OrdersTableSkeleton({ rows = 8 }: { rows?: number }) {
   return (
@@ -134,9 +144,11 @@ export function OrdersTableSkeleton({ rows = 8 }: { rows?: number }) {
 export function OrdersTable({
   orders,
   onView,
+  onEdit,
 }: {
   orders: PrivateOrder[];
   onView: (order: PrivateOrder) => void;
+  onEdit: (order: PrivateOrder) => void;
 }) {
   return (
     <Card className="gap-0 overflow-hidden py-0 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-neutral-200/80">
@@ -160,49 +172,60 @@ export function OrdersTable({
         <TableBody>
           {orders.length === 0 ? (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={9} className="py-12 text-center text-sm text-neutral-500">
+              <TableCell colSpan={8} className="py-12 text-center text-sm text-neutral-500">
                 No orders found.
               </TableCell>
             </TableRow>
           ) : null}
           {orders.map((order) => (
             <TableRow key={order.id} className="border-neutral-100 hover:bg-neutral-50/70">
-              <TableCell className="py-4 pl-5 text-sm text-neutral-700">{customerName(order)}</TableCell>
+              <TableCell className="py-4 pl-5 text-sm text-neutral-700">
+                {order.orderReference?.trim() || "—"}
+              </TableCell>
+              <TableCell className="py-4 text-sm text-neutral-700">{customerName(order)}</TableCell>
               <TableCell className="py-4 text-sm text-neutral-700">{customerEmail(order)}</TableCell>
               <TableCell className="py-4 text-sm text-neutral-700">{logisticsLabel(order)}</TableCell>
               <TableCell className="py-4 text-sm text-neutral-700 tabular-nums">
                 {formatMoney(order.totalAmount, order.currencyCode)}
               </TableCell>
-              <TableCell className="max-w-[180px] truncate py-4 text-sm text-neutral-700">
-                {bookLabel(order)}
-              </TableCell>
               <TableCell className="py-4 text-sm text-neutral-700 tabular-nums">
                 {formatMoney(order.totalBookPrice, order.currencyCode)}
-              </TableCell>
-              <TableCell className="py-4 text-sm text-neutral-700 tabular-nums">
-                {orderQuantity(order)}
               </TableCell>
               <TableCell className="py-4">
                 <Badge
                   variant="outline"
                   className={cn(
                     "h-6 rounded-full px-2.5 text-xs font-medium",
-                    statusClass(order.paymentStatus),
+                    statusClass(order.fulfilmentStatus),
                   )}
                 >
-                  {statusLabel(order.paymentStatus)}
+                  {fulfilmentLabel(order.fulfilmentStatus)}
                 </Badge>
               </TableCell>
-              <TableCell className="py-4 pr-5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-8 gap-1.5 px-2 text-sm font-normal text-neutral-500 hover:bg-transparent hover:text-neutral-800"
-                  onClick={() => onView(order)}
-                >
-                  <Eye className="size-4" strokeWidth={1.75} />
-                  View
-                </Button>
+              <TableCell className="py-4 pr-4 text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-neutral-500 hover:bg-transparent"
+                      aria-label={`Actions for ${order.orderReference || "order"}`}
+                    >
+                      <MoreVertical className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => onView(order)}>
+                      <Eye className="size-4" />
+                      View
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onEdit(order)}>
+                      <Pencil className="size-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           ))}

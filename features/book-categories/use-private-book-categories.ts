@@ -19,10 +19,11 @@ function useRefreshBookCategories() {
   return () => queryClient.invalidateQueries({ queryKey: bookCategoryKeys.all });
 }
 
-export function usePrivateBookCategories(query: BookCategoryListQuery) {
+export function usePrivateBookCategories(query: BookCategoryListQuery, enabled = true) {
   return useQuery({
     queryKey: bookCategoryKeys.privateList(query),
     queryFn: async () => unwrapAction(await listPrivateBookCategories(query)),
+    enabled,
   });
 }
 

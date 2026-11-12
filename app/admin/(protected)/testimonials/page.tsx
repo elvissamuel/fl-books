@@ -1,10 +1,5 @@
-import type { Metadata } from "next";
-import { TestimonialsScreen } from "@/components/testimonials/testimonials-screen";
-
-export const metadata: Metadata = {
-  title: "Testimonials",
-};
+import { redirect } from "next/navigation";
 
 export default function TestimonialsPage() {
-  return <TestimonialsScreen />;
+  redirect("/admin/audience?tab=testimonials");
 }

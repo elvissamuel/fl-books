@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default function HomePage() {
   return (
     <CartProvider>
-      <main className={ptSerif.className} style={{ backgroundColor: catalogCanvas }}>
+      <main className={`${ptSerif.className} landing-page`} style={{ backgroundColor: catalogCanvas }}>
         <LandingHero />
         <ShopByCategory />
         <NewReleases />

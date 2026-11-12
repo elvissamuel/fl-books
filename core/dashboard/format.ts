@@ -2,7 +2,9 @@ import type { DashboardStat } from "@/core/dashboard/types";
 
 export function formatStatValue(stat: DashboardStat) {
   const formatted = stat.value.toLocaleString("en-US");
-  return stat.currency === "USD" ? `$${formatted}` : formatted;
+  if (stat.currency === "USD") return `$${formatted}`;
+  if (stat.currency === "NGN") return `₦${formatted}`;
+  return formatted;
 }
 
 export function formatNaira(value: number) {
@@ -10,7 +12,7 @@ export function formatNaira(value: number) {
 }
 
 export function formatTrend(percent: number) {
-  return `${percent}% vs last month`;
+  return `${percent}% vs previous period`;
 }
 
 export function formatThousands(value: number) {

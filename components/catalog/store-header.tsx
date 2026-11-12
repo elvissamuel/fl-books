@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Books", href: "/books" },
-  { label: "About Author", href: "/#author-banner" },
-  { label: "Contact Us", href: "/#contact" },
+  { label: "About Author", href: "/about" },
+  { label: "Contact Us", href: "/contact" },
 ] as const;
 
 export async function StoreHeader({

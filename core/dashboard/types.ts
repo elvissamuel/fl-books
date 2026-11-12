@@ -4,8 +4,8 @@ export type DashboardStat = {
   id: string;
   label: string;
   value: number;
-  currency: "USD" | null;
-  trendPercent: number;
+  currency: "USD" | "NGN" | null;
+  trendPercent: number | null;
 };
 
 export type RevenuePoint = {
@@ -21,13 +21,13 @@ export type RevenueTrend = {
 };
 
 export type FulfillmentSlice = {
-  id: "delivery" | "pickup";
+  id: "delivery" | "pickup" | "unknown";
   label: string;
   percent: number;
 };
 
 export type ShippingCountry = {
-  code: "US" | "NG" | "CA" | "GH";
+  code: "US" | "NG" | "CA" | "GH" | null;
   name: string;
   orders: number;
   shareLabel: string;
@@ -39,17 +39,18 @@ export type ShippingSummary = {
   totalShareLabel: string;
 };
 
-export type OrderStatus = "shipped" | "pending";
+export type OrderStatus = "shipped" | "pending" | string;
 
 export type RecentOrder = {
   id: string;
   customer: string;
-  type: "Delivery";
+  type: string;
   amount: number;
+  currencyCode: string;
   bookType: string;
   price: number;
   quantity: number;
-  status: OrderStatus;
+  status: string;
 };
 
 export interface DashboardApi {

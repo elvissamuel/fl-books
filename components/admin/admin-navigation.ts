@@ -1,9 +1,9 @@
 import {
   Book,
+  Boxes,
   LayoutGrid,
-  Mail,
   MapPin,
-  MessageSquare,
+  MessagesSquare,
   Settings,
   ShoppingBag,
   User,
@@ -24,8 +24,8 @@ export const adminNavigation: AdminNavItem[] = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/customers", label: "Customer", icon: User },
   { href: "/admin/pickup-stations", label: "Pickup Stations", icon: MapPin },
-  { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
-  { href: "/admin/testimonials", label: "Testimonials", icon: MessageSquare },
+  { href: "/admin/audience", label: "Audience", icon: MessagesSquare },
   { href: "/admin/administration", label: "Administration", icon: Users },
+  { href: "/admin/stock-count", label: "Stock Count", icon: Boxes },
   { href: "/admin/settings", label: "Platform Settings", icon: Settings },
 ];

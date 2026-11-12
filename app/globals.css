@@ -143,6 +143,86 @@ body {
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.landing-page) {
+    scroll-behavior: smooth;
+  }
+
+  .landing-reveal[data-reveal="shown"] .landing-piece {
+    animation: landing-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .landing-reveal[data-reveal="shown"] .landing-stagger > * {
+    animation: landing-card 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .landing-reveal[data-reveal="shown"] .landing-stagger > *:nth-child(1) {
+    animation-delay: 0.08s;
+  }
+  .landing-reveal[data-reveal="shown"] .landing-stagger > *:nth-child(2) {
+    animation-delay: 0.16s;
+  }
+  .landing-reveal[data-reveal="shown"] .landing-stagger > *:nth-child(3) {
+    animation-delay: 0.24s;
+  }
+  .landing-reveal[data-reveal="shown"] .landing-stagger > *:nth-child(4) {
+    animation-delay: 0.32s;
+  }
+  .landing-reveal[data-reveal="shown"] .landing-stagger > *:nth-child(5) {
+    animation-delay: 0.4s;
+  }
+  .landing-reveal[data-reveal="shown"] .landing-stagger > *:nth-child(6) {
+    animation-delay: 0.48s;
+  }
+  .landing-reveal[data-reveal="shown"] .landing-stagger > *:nth-child(7) {
+    animation-delay: 0.56s;
+  }
+  .landing-reveal[data-reveal="shown"] .landing-stagger > *:nth-child(8) {
+    animation-delay: 0.64s;
+  }
+}
+
+.landing-reveal[data-reveal="hidden"] .landing-piece {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.landing-reveal[data-reveal="hidden"] .landing-stagger > * {
+  opacity: 0;
+  transform: translateY(46px) scale(0.96);
+}
+
+.landing-reveal[data-reveal="settled"] .landing-piece,
+.landing-reveal[data-reveal="settled"] .landing-stagger > * {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes landing-card {
+  from {
+    opacity: 0;
+    transform: translateY(46px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @keyframes book-scrim-in {
   from {
     opacity: 0;
