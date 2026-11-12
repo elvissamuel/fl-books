@@ -6,7 +6,12 @@ import { CartButton } from "@/components/cart/cart-button";
 import { getCustomerSession } from "@/infrastructure/auth/customer-session";
 import { cn } from "@/lib/utils";
 
-const navLinks = ["Home", "Books", "About Author", "Contact Us"] as const;
+const navLinks = [
+  { label: "Home", href: "/" },
+  { label: "Books", href: "/books" },
+  { label: "About Author", href: "/about" },
+  { label: "Contact Us", href: "/contact" },
+] as const;
 
 const shelfBooks = [
   { src: "/The_market_place_called_life_1.png", alt: "The Market Called Life" },
@@ -36,27 +41,16 @@ export async function LandingHero() {
       <header className="relative z-20 flex items-center justify-between px-6 py-5 sm:px-10 lg:px-14">
         <BrandMark tone="light" className="h-7" />
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex" aria-label="Primary">
-          {navLinks.map((label) => (
+          {navLinks.map((link) => (
             <a
-              key={label}
-              href={
-                label === "Home"
-                  ? "/"
-                  : label === "Books"
-                    ? "/books"
-                    : label === "Contact Us"
-                      ? "/contact"
-                      : label === "About Author"
-                        ? "/about"
-                        : `#${label.toLowerCase().replace(" ", "-")}`
-              }
+              key={link.label}
+              href={link.href}
               className={cn(
-                "text-[13.5px] font-medium",
-                "transition-colors duration-300 ease-out",
-                label === "Home" ? "text-white" : "text-white/75 hover:text-white",
+                "text-[13.5px] font-medium transition-colors duration-300 ease-out",
+                link.label === "Home" ? "text-white" : "text-white/75 hover:text-white",
               )}
             >
-              {label}
+              {link.label}
             </a>
           ))}
         </nav>
