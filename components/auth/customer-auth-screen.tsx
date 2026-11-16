@@ -7,8 +7,10 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, X } from "lucide-react";
 import { saveCustomerSession } from "@/app/customer/session/actions";
 import type { CustomerOtpType } from "@/core/customers/public-api";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import {
   forgotCustomerPassword,
+  googlePublicCustomer,
   loginPublicCustomer,
   registerPublicCustomer,
   resendCustomerOtp,
@@ -67,10 +69,31 @@ export function CustomerAuthScreen({
       }
       return;
     }
+    await openSession(result.data);
+  }
+
+  async function onGoogle(idToken: string) {
+    if (pending) return;
+    setPending(true);
+    showNotice("");
+    const result = await googlePublicCustomer({ idToken });
+    if (!result.ok) {
+      setPending(false);
+      showNotice(result.message);
+      return;
+    }
+    await openSession(result.data);
+  }
+
+  async function openSession(data: {
+    accessToken: string;
+    refreshToken: string;
+    customer: { customerId: string };
+  }) {
     const saved = await saveCustomerSession({
-      customerId: result.data.customer.customerId,
-      accessToken: result.data.accessToken,
-      refreshToken: result.data.refreshToken,
+      customerId: data.customer.customerId,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
     });
     setPending(false);
     if (!saved.ok) {
@@ -350,14 +373,13 @@ export function CustomerAuthScreen({
           {view === "sign-in" || view === "sign-up" ? (
             <>
               <p className="my-3 text-center text-[13px] text-[#98a2b3]">Or</p>
-              <button
-                type="button"
-                onClick={() => showNotice("Google sign-in is not available yet.")}
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#e4e7ec] bg-white text-[14px] text-[#1c1f24] hover:bg-[#fafafa]"
-              >
-                <GoogleMark />
-                {view === "sign-up" ? "Signup with Google" : "Sign In with Google"}
-              </button>
+              <GoogleSignInButton
+                mode={view}
+                label={view === "sign-up" ? "Signup with Google" : "Sign In with Google"}
+                disabled={pending}
+                onCredential={onGoogle}
+                onUnavailable={showNotice}
+              />
               <p className="mt-4 text-center text-[13px] text-[#667085]">
                 {view === "sign-up" ? "Already have an account? " : "Don't have an account? "}
                 <Link
@@ -425,25 +447,3 @@ function withQuery(path: string, query: Record<string, string | undefined>) {
   return text ? `${path}?${text}` : path;
 }
 
-function GoogleMark() {
-  return (
-    <svg viewBox="0 0 18 18" className="size-4" aria-hidden="true">
-      <path
-        fill="#4285F4"
-        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
-      />
-      <path
-        fill="#34A853"
-        d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"
-      />
-      <path
-        fill="#EA4335"
-        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58z"
-      />
-    </svg>
-  );
-}

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { GetInTouchTable, GetInTouchTableSkeleton } from "@/components/get-in-touch/get-in-touch-table";
-import { Button } from "@/components/ui/button";
 import { usePrivateGetInTouch } from "@/features/get-in-touch/use-get-in-touch";
 
 const pageSize = 10;
@@ -30,15 +30,7 @@ export function GetInTouchScreen({ embedded = false }: { embedded?: boolean }) {
       {embedded ? null : (
         <header className="mb-4 flex items-center justify-between gap-4">
           <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Get in Touch</h1>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-            aria-label="Notifications"
-          >
-            <Bell className="size-4" strokeWidth={1.75} />
-          </Button>
+          <NotificationBell />
         </header>
       )}
 

@@ -3,6 +3,8 @@
 import type {
   CustomerAuthResponse,
   CustomerForgotPasswordRequest,
+  CustomerGoogleAuthRequest,
+  CustomerGoogleAuthResponse,
   CustomerLoginRequest,
   CustomerOtpChallenge,
   CustomerRegisterRequest,
@@ -45,6 +47,13 @@ export async function resendCustomerOtp(request: CustomerResendOtpRequest) {
 
 export async function loginPublicCustomer(request: CustomerLoginRequest) {
   return browserApi<CustomerAuthResponse>("/api/v1/customer/public/login", {
+    method: "POST",
+    json: request,
+  });
+}
+
+export async function googlePublicCustomer(request: CustomerGoogleAuthRequest) {
+  return browserApi<CustomerGoogleAuthResponse>("/api/v1/customer/public/google", {
     method: "POST",
     json: request,
   });

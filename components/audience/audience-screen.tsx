@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
 import { GetInTouchScreen } from "@/components/get-in-touch/get-in-touch-screen";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { NewsletterScreen } from "@/components/newsletter/newsletter-screen";
 import { TestimonialsScreen } from "@/components/testimonials/testimonials-screen";
 import { audienceTabs, type AudienceTab } from "@/components/audience/audience-tabs";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function AudienceScreen({ initialTab }: { initialTab: AudienceTab }) {
@@ -27,15 +26,7 @@ export function AudienceScreen({ initialTab }: { initialTab: AudienceTab }) {
     <div className="px-5 pt-5 pb-8">
       <header className="mb-4 flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Audience</h1>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-          aria-label="Notifications"
-        >
-          <Bell className="size-4" strokeWidth={1.75} />
-        </Button>
+        <NotificationBell />
       </header>
 
       <div className="mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Audience">

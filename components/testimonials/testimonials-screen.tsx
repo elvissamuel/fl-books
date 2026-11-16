@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, Loader2, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { AddTestimonyPanel } from "@/components/testimonials/add-testimony-panel";
 import { TestimonialsTable, TestimonialsTableSkeleton } from "@/components/testimonials/testimonials-table";
@@ -92,17 +93,7 @@ export function TestimonialsScreen({ embedded = false }: { embedded?: boolean })
             <Plus className="size-4" />
             Add Testimony
           </Button>
-          {embedded ? null : (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-              aria-label="Notifications"
-            >
-              <Bell className="size-4" strokeWidth={1.75} />
-            </Button>
-          )}
+          {embedded ? null : <NotificationBell />}
         </div>
       </header>
 

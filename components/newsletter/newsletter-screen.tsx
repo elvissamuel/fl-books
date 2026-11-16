@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { NewsletterTable, NewsletterTableSkeleton } from "@/components/newsletter/newsletter-table";
 import { Button } from "@/components/ui/button";
@@ -58,17 +59,7 @@ export function NewsletterScreen({ embedded = false }: { embedded?: boolean }) {
             <Plus className="size-4" />
             {exporting ? "Exporting…" : "Export"}
           </Button>
-          {embedded ? null : (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-              aria-label="Notifications"
-            >
-              <Bell className="size-4" strokeWidth={1.75} />
-            </Button>
-          )}
+          {embedded ? null : <NotificationBell />}
         </div>
       </header>
 

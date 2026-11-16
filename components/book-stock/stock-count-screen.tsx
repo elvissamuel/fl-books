@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { AddStockPanel, StockDetailPanel } from "@/components/book-stock/stock-panels";
 import { StockCountTable, StockCountTableSkeleton } from "@/components/book-stock/stock-count-table";
-import { Button } from "@/components/ui/button";
 import type { BookStockCount } from "@/core/books/stock-api";
 import { usePrivateBookStock } from "@/features/book-stock/use-book-stock";
 
@@ -33,15 +33,7 @@ export function StockCountScreen() {
     <div className="px-5 pt-5 pb-8">
       <header className="mb-4 flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Stock Count</h1>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-          aria-label="Notifications"
-        >
-          <Bell className="size-4" strokeWidth={1.75} />
-        </Button>
+        <NotificationBell />
       </header>
 
       <label className="relative mb-4 block w-full max-w-[280px]">

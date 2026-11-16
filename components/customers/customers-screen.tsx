@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { CustomerStatusDialog } from "@/components/customers/customer-status-dialog";
 import { CustomerViewPanel } from "@/components/customers/customer-view-panel";
 import { CustomersTable, CustomersTableSkeleton } from "@/components/customers/customers-table";
-import { Button } from "@/components/ui/button";
 import type { AdminCustomer } from "@/core/customers/admin-api";
 import type { CustomerListFilter } from "@/core/customers/types";
 import { customersKeys } from "@/features/customers/query-keys";
@@ -73,15 +73,7 @@ export function CustomersScreen() {
     <div className="px-5 pt-5 pb-8">
       <header className="mb-4 flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Customer</h1>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-          aria-label="Notifications"
-        >
-          <Bell className="size-4" strokeWidth={1.75} />
-        </Button>
+        <NotificationBell />
       </header>
 
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

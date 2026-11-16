@@ -3,6 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import type {
   CustomerForgotPasswordRequest,
+  CustomerGoogleAuthRequest,
   CustomerLoginRequest,
   CustomerRegisterRequest,
   CustomerResendOtpRequest,
@@ -12,6 +13,7 @@ import type {
 import { unwrapAction } from "@/features/auth/unwrap-action";
 import {
   forgotCustomerPassword,
+  googlePublicCustomer,
   loginPublicCustomer,
   registerPublicCustomer,
   resendCustomerOtp,
@@ -51,6 +53,13 @@ export function usePublicCustomerLogin() {
   return useMutation({
     mutationFn: async (request: CustomerLoginRequest) =>
       unwrapAction(await loginPublicCustomer(request)),
+  });
+}
+
+export function usePublicCustomerGoogle() {
+  return useMutation({
+    mutationFn: async (request: CustomerGoogleAuthRequest) =>
+      unwrapAction(await googlePublicCustomer(request)),
   });
 }
 
