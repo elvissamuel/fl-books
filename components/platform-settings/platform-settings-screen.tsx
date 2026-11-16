@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { AdminProfilePanel } from "@/components/platform-settings/admin-profile-panel";
 import { CurrencyDialog } from "@/components/platform-settings/currency-dialog";
 import { DistancePricingPanel } from "@/components/platform-settings/distance-pricing-panel";
@@ -10,7 +11,7 @@ import { DistanceTierDialog } from "@/components/platform-settings/distance-tier
 import { SettingsDeleteDialog } from "@/components/platform-settings/settings-delete-dialog";
 import { SettingsSuccessDialog } from "@/components/platform-settings/settings-success-dialog";
 import { StoreCurrencyPanel } from "@/components/platform-settings/store-currency-panel";
-import { Button } from "@/components/ui/button";
+import type { AdminAccount } from "@/core/auth/admin-api";
 import type { Currency, CurrencyWriteRequest } from "@/core/currencies/currency";
 import type { DistanceBand, DistanceBandWriteRequest } from "@/core/distance-bands/private-api";
 import type { AdminProfile, PlatformSettings, WeightSurcharge } from "@/core/platform-settings/types";
@@ -28,6 +29,7 @@ import {
   usePrivateDistanceBands,
   useUpdatePrivateDistanceBand,
 } from "@/features/distance-bands/use-distance-bands";
+import { usePrivateAdminProfile, useUpdatePrivateAdminProfile } from "@/features/auth/use-admin-profile";
 import { platformSettingsKeys } from "@/features/platform-settings/query-keys";
 import { usePlatformSettings } from "@/features/platform-settings/use-platform-settings";
 import { platformSettingsApi } from "@/infrastructure/platform-settings/platform-settings-api";
@@ -46,6 +48,8 @@ type DeleteTarget = { kind: "tier"; item: DistanceBand } | { kind: "currency"; i
 export function PlatformSettingsScreen() {
   const queryClient = useQueryClient();
   const settings = usePlatformSettings();
+  const adminProfile = usePrivateAdminProfile();
+  const saveAdminProfile = useUpdatePrivateAdminProfile();
   const bands = usePrivateDistanceBands();
   const createBand = useCreatePrivateDistanceBand();
   const updateBand = useUpdatePrivateDistanceBand();
@@ -64,6 +68,7 @@ export function PlatformSettingsScreen() {
   const [success, setSuccess] = useState<"tier" | "currency" | null>(null);
   const [pendingDelete, setPendingDelete] = useState<DeleteTarget | null>(null);
   const [actionError, setActionError] = useState("");
+  const [profileNotice, setProfileNotice] = useState("");
   const editBand = usePrivateDistanceBand(editBandId);
   const editCurrency = usePrivateCurrency(editCurrencyId);
   const savingBand = createBand.isPending || updateBand.isPending;
@@ -100,8 +105,12 @@ export function PlatformSettingsScreen() {
   }, [editCurrency.data, editCurrency.error, editCurrencyId, editingCurrency]);
 
   useEffect(() => {
+    if (!adminProfile.data) return;
+    setProfile((current) => current ?? toAdminForm(adminProfile.data));
+  }, [adminProfile.data]);
+
+  useEffect(() => {
     if (!settings.data) return;
-    setProfile((current) => current ?? settings.data.profile);
     setWeight((current) => current ?? settings.data.weight);
   }, [settings.data]);
 
@@ -111,9 +120,30 @@ export function PlatformSettingsScreen() {
 
   function changeProfile(next: AdminProfile) {
     setProfile(next);
-    const current = queryClient.getQueryData<PlatformSettings>(platformSettingsKeys.all);
-    if (current) remember({ ...current, profile: next });
-    void platformSettingsApi.updateProfile(next);
+    setProfileNotice("");
+  }
+
+  const savedProfile = adminProfile.data ? toAdminForm(adminProfile.data) : null;
+  const profileChanged = profile !== null && savedProfile !== null && !sameAdminForm(profile, savedProfile);
+
+  async function saveProfile() {
+    if (!profile || !profileChanged) return;
+    setActionError("");
+    setProfileNotice("");
+    try {
+      const saved = await saveAdminProfile.mutateAsync({
+        firstName: profile.firstName.trim(),
+        lastName: profile.lastName.trim(),
+        phoneNumber: profile.phone.trim(),
+        profilePictureUrl: profile.imageUrl.startsWith("/") ? "" : profile.imageUrl,
+        inAppNotificationsEnabled: profile.inAppNotifications,
+        emailNotificationsEnabled: profile.emailNotifications,
+      });
+      setProfile(toAdminForm(saved));
+      setProfileNotice("Profile saved.");
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not save the profile.");
+    }
   }
 
   function changeWeight(next: WeightSurcharge) {
@@ -189,15 +219,7 @@ export function PlatformSettingsScreen() {
     <div className="px-5 pt-5 pb-8">
       <header className="mb-4 flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Platform Settings</h1>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-          aria-label="Notifications"
-        >
-          <Bell className="size-4" strokeWidth={1.75} />
-        </Button>
+        <NotificationBell />
       </header>
 
       {settings.error instanceof Error ? (
@@ -255,8 +277,23 @@ export function PlatformSettingsScreen() {
         </div>
 
         <div className="pt-5">
+          {tab === "profile" && adminProfile.isLoading ? (
+            <p className="text-sm text-neutral-500">Loading profile…</p>
+          ) : null}
+          {tab === "profile" && adminProfile.error instanceof Error ? (
+            <p className="text-sm text-danger">{adminProfile.error.message}</p>
+          ) : null}
+          {tab === "profile" && profileNotice ? (
+            <p className="mb-3 text-sm text-brand">{profileNotice}</p>
+          ) : null}
           {tab === "profile" && profile ? (
-            <AdminProfilePanel profile={profile} onChange={changeProfile} />
+            <AdminProfilePanel
+              profile={profile}
+              onChange={changeProfile}
+              onSave={() => void saveProfile()}
+              saving={saveAdminProfile.isPending}
+              changed={profileChanged}
+            />
           ) : null}
           {tab === "distance" && weight ? (
             <DistancePricingPanel
@@ -347,4 +384,27 @@ export function PlatformSettingsScreen() {
       ) : null}
     </div>
   );
+}
+
+function sameAdminForm(current: AdminProfile, saved: AdminProfile) {
+  return (
+    current.firstName.trim() === saved.firstName.trim() &&
+    current.lastName.trim() === saved.lastName.trim() &&
+    current.phone.trim() === saved.phone.trim() &&
+    current.imageUrl === saved.imageUrl &&
+    current.inAppNotifications === saved.inAppNotifications &&
+    current.emailNotifications === saved.emailNotifications
+  );
+}
+
+function toAdminForm(account: AdminAccount): AdminProfile {
+  return {
+    firstName: account.firstName ?? "",
+    lastName: account.lastName ?? "",
+    email: account.emailAddress ?? "",
+    phone: account.phoneNumber ?? "",
+    imageUrl: account.profilePictureUrl ?? "",
+    inAppNotifications: account.inAppNotificationsEnabled,
+    emailNotifications: account.emailNotificationsEnabled,
+  };
 }

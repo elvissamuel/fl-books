@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { AdminAccountDialog } from "@/components/administration/add-admin-dialog";
 import { AdminStatusDialog } from "@/components/administration/admin-status-dialog";
 import {
@@ -80,15 +81,7 @@ export function AdministrationScreen() {
             <Plus className="size-4" />
             Add new admin
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-            aria-label="Notifications"
-          >
-            <Bell className="size-4" strokeWidth={1.75} />
-          </Button>
+          <NotificationBell />
         </div>
       </header>
 

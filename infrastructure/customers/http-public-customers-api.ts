@@ -9,6 +9,7 @@ export const publicCustomerEndpoints = {
   resetPassword: "/api/v1/customer/public/reset-password",
   resendOtp: "/api/v1/customer/public/resend-otp",
   login: "/api/v1/customer/public/login",
+  google: "/api/v1/customer/public/google",
   forgotPassword: "/api/v1/customer/public/forgot-password",
 } as const;
 
@@ -38,6 +39,10 @@ export const publicCustomersApi: PublicCustomersApi = {
 
   login(request) {
     return apiJson(publicCustomerEndpoints.login, post(request));
+  },
+
+  google(request) {
+    return apiJson(publicCustomerEndpoints.google, post(request));
   },
 
   forgotPassword(request) {

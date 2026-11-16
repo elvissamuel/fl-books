@@ -112,6 +112,15 @@ export type AdminResetPasswordRequest = {
   newPassword: string;
 };
 
+export type AdminProfileUpdateRequest = {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  profilePictureUrl: string;
+  inAppNotificationsEnabled: boolean;
+  emailNotificationsEnabled: boolean;
+};
+
 export type AdminUpdateRequest = {
   firstName: string;
   lastName: string;

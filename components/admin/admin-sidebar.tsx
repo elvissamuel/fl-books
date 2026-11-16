@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { logoutAdmin } from "@/app/admin/(protected)/logout-action";
 import { adminNavigation } from "@/components/admin/admin-navigation";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +23,7 @@ export function AdminSidebar() {
           className="h-14 w-auto mix-blend-screen"
         />
       </div>
-      <nav className="flex flex-col gap-1 px-3" aria-label="Admin">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3" aria-label="Admin">
         {adminNavigation.map((item) => {
           const active = item.exact
             ? pathname === item.href
@@ -46,7 +48,26 @@ export function AdminSidebar() {
           );
         })}
       </nav>
-      <div className="mt-auto h-28 bg-gradient-to-b from-transparent to-black/20" />
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-white/15 px-4 py-4">
+        <Link href="/admin/settings" aria-label="Profile" className="rounded-full">
+          <Image
+            src="/admin-profile.png"
+            alt=""
+            width={36}
+            height={36}
+            className="size-9 rounded-full object-cover ring-2 ring-white/40"
+          />
+        </Link>
+        <form action={logoutAdmin}>
+          <button
+            type="submit"
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium text-white/95 hover:bg-white/10"
+          >
+            <LogOut className="size-4" strokeWidth={1.75} />
+            Log out
+          </button>
+        </form>
+      </div>
     </aside>
   );
 }

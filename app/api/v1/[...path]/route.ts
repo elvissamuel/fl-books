@@ -36,6 +36,14 @@ function isNewsletterExport(path: string[]) {
   return path[0] === "newsletter" && path[1] === "private" && path[2] === "export";
 }
 
+function isCustomerNotification(path: string[], request: NextRequest) {
+  return (
+    path[0] === "notifications" &&
+    path[1] === "private" &&
+    request.headers.get("x-customer-session") === "1"
+  );
+}
+
 async function forward(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
   const joined = path.map((segment) => encodeURIComponent(segment)).join("/");
@@ -90,6 +98,16 @@ async function forward(request: NextRequest, context: { params: Promise<{ path: 
       }
       headers.set("Authorization", `Bearer ${admin.accessToken}`);
     }
+  } else if (isCustomerNotification(path, request)) {
+    const customer = await getCustomerSession();
+    if (!customer) {
+      return NextResponse.json(
+        { success: false, message: expiredMessage, sessionExpired: true },
+        { status: 401 },
+      );
+    }
+    headers.set("Authorization", `Bearer ${customer.accessToken}`);
+    usedCustomerSession = true;
   } else if (isPickupLocationList(path) && request.method.toUpperCase() === "GET") {
     const admin = await getAdminSession();
     if (admin) {

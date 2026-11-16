@@ -3,6 +3,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import type { AdminProfile } from "@/core/platform-settings/types";
+import { useUploadPrivateFile } from "@/features/files/use-files";
 import { cn } from "@/lib/utils";
 
 const fieldClass =
@@ -11,14 +12,22 @@ const fieldClass =
 export function AdminProfilePanel({
   profile,
   onChange,
+  onSave,
+  saving = false,
+  changed = false,
 }: {
   profile: AdminProfile;
   onChange: (profile: AdminProfile) => void;
+  onSave: () => void;
+  saving?: boolean;
+  changed?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const uploadFile = useUploadPrivateFile();
   const [pictureError, setPictureError] = useState("");
+  const busy = saving || uploadFile.isPending;
 
-  function choosePicture(file: File | undefined) {
+  async function choosePicture(file: File | undefined) {
     if (!file) return;
     const allowed = file.type === "image/jpeg" || file.type === "image/png";
     if (!allowed || file.size > 10 * 1024 * 1024) {
@@ -26,27 +35,27 @@ export function AdminProfilePanel({
       return;
     }
     setPictureError("");
-    onChange({ ...profile, imageUrl: URL.createObjectURL(file) });
+    try {
+      const uploaded = await uploadFile.mutateAsync({ category: "PROFILE_PICTURE", file });
+      if (!uploaded.fileUrl) throw new Error("Picture upload did not return a file URL.");
+      onChange({ ...profile, imageUrl: uploaded.fileUrl });
+    } catch (error) {
+      setPictureError(error instanceof Error ? error.message : "Picture upload failed.");
+    }
   }
 
   return (
     <div>
       <h2 className="text-[15px] font-semibold text-neutral-950">Admin Information</h2>
       <div className="relative mt-4 h-[4.75rem]">
-        <Image
-          src={profile.imageUrl}
-          alt=""
-          width={64}
-          height={64}
-          unoptimized
-          className="size-16 rounded-full object-cover"
-        />
+        <ProfilePhoto src={profile.imageUrl} />
         <button
           type="button"
+          disabled={busy}
           onClick={() => fileRef.current?.click()}
-          className="absolute top-4 left-11 z-10 h-6 rounded-full bg-brand px-2.5 text-[10px] font-medium text-white"
+          className="absolute top-4 left-11 z-10 h-6 rounded-full bg-brand px-2.5 text-[10px] font-medium text-white disabled:opacity-60"
         >
-          Change Picture
+          {uploadFile.isPending ? "Uploading…" : "Change Picture"}
         </button>
         <p className="absolute top-11 left-16 text-[10px] whitespace-nowrap text-neutral-400">
           JPG or PNG 10mb
@@ -84,10 +93,10 @@ export function AdminProfilePanel({
           <input
             type="email"
             value={profile.email}
-            onChange={(event) => onChange({ ...profile, email: event.target.value })}
+            readOnly
             placeholder="Type Here"
             autoComplete="email"
-            className={fieldClass}
+            className={`${fieldClass} text-neutral-500`}
           />
         </Field>
         <Field label="Phone Number">
@@ -116,7 +125,33 @@ export function AdminProfilePanel({
           onChange={(emailNotifications) => onChange({ ...profile, emailNotifications })}
         />
       </div>
+
+      <button
+        type="button"
+        disabled={busy || !changed}
+        onClick={onSave}
+        className="mt-6 inline-flex h-11 items-center justify-center rounded-lg bg-brand px-5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
+      >
+        {saving ? "Saving…" : "Save changes"}
+      </button>
     </div>
+  );
+}
+
+function ProfilePhoto({ src }: { src: string }) {
+  const display = src || "/admin-profile.png";
+  if (display.startsWith("http") && !display.includes("res.cloudinary.com")) {
+    return <img src={display} alt="" className="size-16 rounded-full object-cover" />;
+  }
+  return (
+    <Image
+      src={display}
+      alt=""
+      width={64}
+      height={64}
+      unoptimized={display.startsWith("http")}
+      className="size-16 rounded-full object-cover"
+    />
   );
 }
 

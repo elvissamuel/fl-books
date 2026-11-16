@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, Loader2, Plus, Search } from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { AddDeliveryOutletDialog } from "@/components/pickup-stations/add-delivery-outlet-dialog";
 import {
@@ -201,15 +202,7 @@ export function PickupStationsScreen() {
             <Plus className="size-4" />
             Add new location
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-            aria-label="Notifications"
-          >
-            <Bell className="size-4" strokeWidth={1.75} />
-          </Button>
+          <NotificationBell />
         </div>
       </header>
 

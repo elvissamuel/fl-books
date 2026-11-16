@@ -58,6 +58,17 @@ export type CustomerForgotPasswordRequest = {
   emailAddress: string;
 };
 
+export type CustomerGoogleAuthRequest = {
+  idToken: string;
+};
+
+export type CustomerAddress = {
+  country: string;
+  state: string;
+  city: string;
+  addressLine: string;
+};
+
 export type CustomerOtpChallenge = {
   userId: string;
   emailAddress: string;
@@ -70,12 +81,21 @@ export type CustomerAuthResponse = {
   customer: PublicCustomer;
 };
 
+export type CustomerGoogleAuthResponse = {
+  accessToken: string;
+  refreshToken: string;
+  customer: PublicCustomer & {
+    address: CustomerAddress | null;
+  };
+};
+
 export interface PublicCustomersApi {
   register(request: CustomerRegisterRequest): Promise<ApiResponse<null>>;
   verifyOtp(request: CustomerVerifyOtpRequest): Promise<ApiResponse<PublicCustomer>>;
   resetPassword(request: CustomerResetPasswordRequest): Promise<ApiResponse<string | null>>;
   resendOtp(request: CustomerResendOtpRequest): Promise<ApiResponse<CustomerOtpChallenge>>;
   login(request: CustomerLoginRequest): Promise<ApiResponse<CustomerAuthResponse>>;
+  google(request: CustomerGoogleAuthRequest): Promise<ApiResponse<CustomerGoogleAuthResponse>>;
   forgotPassword(
     request: CustomerForgotPasswordRequest,
   ): Promise<ApiResponse<CustomerOtpChallenge>>;

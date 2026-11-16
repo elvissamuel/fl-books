@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { AccountMenu } from "@/components/auth/account-menu";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { CartButton } from "@/components/cart/cart-button";
+import { CustomerNotificationBell } from "@/components/notifications/customer-notification-bell";
 import { getCustomerSession } from "@/infrastructure/auth/customer-session";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ export async function StoreHeader({
           <Search className="size-[18px]" strokeWidth={1.75} />
         </a>
         <CartButton className="text-[#1c1f24]" />
+        {session ? <CustomerNotificationBell /> : null}
         {session ? (
           <AccountMenu />
         ) : (

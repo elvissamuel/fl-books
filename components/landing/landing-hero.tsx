@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { AccountMenu } from "@/components/auth/account-menu";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { CartButton } from "@/components/cart/cart-button";
+import { CustomerNotificationBell } from "@/components/notifications/customer-notification-bell";
 import { getCustomerSession } from "@/infrastructure/auth/customer-session";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +60,7 @@ export async function LandingHero() {
             <Search className="size-[18px]" strokeWidth={1.75} />
           </button>
           <CartButton className="text-white" />
+          {session ? <CustomerNotificationBell tone="light" /> : null}
           {session ? (
             <AccountMenu />
           ) : (

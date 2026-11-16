@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { OrderEditPanel } from "@/components/orders/order-edit-panel";
 import { OrderViewPanel } from "@/components/orders/order-view-panel";
 import { OrdersTable, OrdersTableSkeleton } from "@/components/orders/orders-table";
-import { Button } from "@/components/ui/button";
 import {
   fulfilmentStatuses,
   type FulfilmentStatus,
@@ -85,15 +85,7 @@ export function OrdersScreen() {
     <div className="px-5 pt-5 pb-8">
       <header className="mb-4 flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Orders</h1>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-9 rounded-full border-neutral-200 bg-white text-neutral-600 shadow-none"
-          aria-label="Notifications"
-        >
-          <Bell className="size-4" strokeWidth={1.75} />
-        </Button>
+        <NotificationBell />
       </header>
 
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
