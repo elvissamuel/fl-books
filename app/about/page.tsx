@@ -19,7 +19,7 @@ export default function AboutPage() {
       <main className={`${ptSerif.className} bg-white`}>
         <StoreHeader active="About Author" />
         <section aria-label="About Author">
-          <h1 className="sr-only">About Author</h1>
+          <h1 className="sr-only">About Author </h1>
           <Image
             src="/about-banner.png"
             alt="About Author"
