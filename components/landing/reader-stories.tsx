@@ -43,12 +43,12 @@ export async function ReaderStories() {
         <p className="mx-auto mt-8 max-w-[1180px] text-center text-sm text-[#8d939c]">No stories to show yet.</p>
       ) : null}
       {stories.items.length > 0 ? (
-        <div className="mt-8 overflow-x-auto">
-          <div className="landing-stagger mx-auto flex w-max gap-4 px-6">
+        <div className="mt-8 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="landing-stagger mx-auto flex w-max gap-4">
             {stories.items.map((story) => (
               <article
                 key={story.id}
-                className="w-[280px] shrink-0 rounded-[18px] bg-white p-5 shadow-[0_8px_24px_rgba(20,24,40,0.05)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,24,40,0.1)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:w-[320px]"
+                className="w-[min(78vw,320px)] shrink-0 rounded-[18px] bg-white p-5 shadow-[0_8px_24px_rgba(20,24,40,0.05)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,24,40,0.1)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:w-[320px]"
               >
                 <StarRating />
                 <p className="mt-3 text-[14px] leading-6 text-[#3a3f46]">{story.message}</p>

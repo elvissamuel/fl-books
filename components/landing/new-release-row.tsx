@@ -30,9 +30,9 @@ export function NewReleaseRow({ books }: { books: PublicBook[] }) {
             return (
               <article
                 key={book.id}
-                className="group flex w-[88%] shrink-0 gap-4 rounded-[18px] bg-white p-4 shadow-[0_10px_28px_rgba(20,24,40,0.06)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_16px_34px_rgba(20,24,40,0.1)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:w-[46%]"
+                className="group flex w-[86%] shrink-0 flex-col gap-4 rounded-[18px] bg-white p-4 shadow-[0_10px_28px_rgba(20,24,40,0.06)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_16px_34px_rgba(20,24,40,0.1)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:w-[72%] lg:w-[46%] lg:flex-row"
               >
-                <div className="relative h-[228px] w-[168px] shrink-0 overflow-hidden rounded-xl bg-[#f4f6f8]">
+                <div className="relative h-[210px] w-full shrink-0 overflow-hidden rounded-xl bg-[#f4f6f8] lg:h-[228px] lg:w-[168px]">
                   {cover ? (
                     <Image
                       src={cover}

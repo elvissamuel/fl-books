@@ -17,7 +17,7 @@ export function SectionHeading({
 }) {
   return (
     <div className="landing-piece mb-6 flex items-end justify-between gap-4">
-      <div>
+      <div className="min-w-0">
         <h2
           id={id}
           className="relative inline-block pb-1 text-[22px] font-semibold tracking-[-0.02em] text-brand"
@@ -25,11 +25,11 @@ export function SectionHeading({
           {title}
           <span className="absolute bottom-0 left-0 h-[3px] w-11 rounded-full bg-[#fb7d48]" />
         </h2>
-        <p className="mt-2.5 text-[13.5px] text-[#8d939c]">{subtitle}</p>
+        <p className="mt-2.5 text-[13.5px] leading-5 text-[#8d939c]">{subtitle}</p>
       </div>
       <a
         href={href}
-        className="mb-0.5 inline-flex items-center gap-0.5 text-[13px] font-medium text-[#9aa1ab] transition-colors duration-300 ease-out hover:text-brand"
+        className="mb-0.5 inline-flex shrink-0 items-center gap-0.5 text-[13px] font-medium whitespace-nowrap text-[#9aa1ab] transition-colors duration-300 ease-out hover:text-brand"
       >
         See All
         <ChevronRight className="size-3.5" />

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Search } from "lucide-react";
 import { AccountMenu } from "@/components/auth/account-menu";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { CartButton } from "@/components/cart/cart-button";
@@ -56,9 +55,6 @@ export async function LandingHero() {
           ))}
         </nav>
         <div className="flex items-center gap-4 sm:gap-5">
-          <button type="button" aria-label="Search" className="text-white">
-            <Search className="size-[18px]" strokeWidth={1.75} />
-          </button>
           <CartButton className="text-white" />
           {session ? <CustomerNotificationBell tone="light" /> : null}
           {session ? (
@@ -84,7 +80,7 @@ export async function LandingHero() {
             Explore a growing collection of books written to challenge your perspective, strengthen
             your faith, and equip you for the different seasons and decisions life brings.
           </p>
-          <div className="mt-6 flex items-center gap-5">
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
             <a
               href="#collection"
               className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-[13.5px] font-medium text-white transition-colors duration-300 ease-out hover:bg-brand-hover"
@@ -97,7 +93,7 @@ export async function LandingHero() {
           </div>
         </div>
 
-        <div className="hero-books relative z-10 flex items-end -mt-40">
+        <div className="hero-books relative z-10 mt-8 flex items-end sm:mt-10 lg:-mt-40">
           {shelfBooks.map((book) => (
             <BookShot
               key={book.src}
@@ -110,22 +106,24 @@ export async function LandingHero() {
             src="/possessing_the_gates_of_the_enemy.png"
             alt="Possessing the Gates of the Enemy"
             priority
-            className="hero-feature aspect-[229/324]"
+            className="hero-feature hidden aspect-[229/324] lg:block"
           />
         </div>
       </div>
       <style>{`
-        .hero-books { gap: 12px; flex-wrap: wrap; justify-content: center; }
-        .hero-shelf { width: 76px; flex: none; }
+        .hero-books { gap: 8px; flex-wrap: nowrap; justify-content: center; }
+        .hero-shelf { width: calc((100% - 24px) / 4); max-width: 76px; flex: none; }
         .hero-feature { width: 168px; flex: none; }
         @media (min-width: 640px) {
-          .hero-books { gap: 16px; flex-wrap: nowrap; justify-content: flex-start; }
-          .hero-shelf { width: 120px; }
+          .hero-books { gap: 16px; }
+          .hero-shelf { width: 120px; max-width: none; }
           .hero-feature { width: 200px; }
         }
         @media (min-width: 1024px) {
           .hero-books {
             gap: clamp(36px, 4.4vw, 66px);
+            flex-wrap: nowrap;
+            justify-content: flex-start;
             margin-left: calc(-3.5rem - clamp(44px, 3.5vw, 58px));
             margin-right: -3.5rem;
             padding-right: 4rem;
