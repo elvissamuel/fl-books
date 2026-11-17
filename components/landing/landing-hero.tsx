@@ -2,6 +2,7 @@ import Image from "next/image";
 import { AccountMenu } from "@/components/auth/account-menu";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { CartButton } from "@/components/cart/cart-button";
+import { MobileNavMenu } from "@/components/navigation/mobile-nav-menu";
 import { CustomerNotificationBell } from "@/components/notifications/customer-notification-bell";
 import { getCustomerSession } from "@/infrastructure/auth/customer-session";
 import { cn } from "@/lib/utils";
@@ -39,7 +40,7 @@ export async function LandingHero() {
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.15)_38%,rgba(0,0,0,0.55)_100%)]" />
 
       <header className="relative z-20 flex items-center justify-between px-6 py-5 sm:px-10 lg:px-14">
-        <BrandMark tone="light" className="h-7" />
+        <BrandMark tone="light" className="h-16 md:h-20" />
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex" aria-label="Primary">
           {navLinks.map((link) => (
             <a
@@ -55,7 +56,8 @@ export async function LandingHero() {
           ))}
         </nav>
         <div className="flex items-center gap-4 sm:gap-5">
-          <CartButton className="text-white" />
+          <MobileNavMenu tone="light" active="Home" />
+          <CartButton className="hidden text-white md:inline-block" />
           {session ? <CustomerNotificationBell tone="light" /> : null}
           {session ? (
             <AccountMenu />
