@@ -50,7 +50,7 @@ export function BooksCatalog({
 
   return (
     <div>
-      <StoreHeader searchHref="#book-search" />
+      <StoreHeader />
       <section className="relative isolate h-[280px] overflow-hidden bg-[#101114] text-white sm:h-[320px]">
         <div className="absolute inset-0 grid grid-cols-4">
           {bannerCovers.map((src) => (

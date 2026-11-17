@@ -8,14 +8,17 @@ export function BrandMark({
   className?: string;
   tone?: "brand" | "light";
 }) {
+  const light = tone === "light";
+
   return (
     <Image
-      src="/AFL-Books-04.png"
+      src={light ? "/AFL-Books-04.png" : "/AFL-Books-03.png"}
       alt="AFL"
-      width={92}
-      height={25}
+      width={1559}
+      height={1559}
+      sizes="(min-width: 768px) 80px, 64px"
       priority
-      className={cn("h-24 w-auto", tone === "light" && "brightness-0 invert", className)}
+      className={cn("h-24 w-auto", light && "brightness-0 invert", className)}
     />
   );
 }
