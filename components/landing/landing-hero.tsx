@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { AccountMenu } from "@/components/auth/account-menu";
+import { AuthBackground } from "@/components/auth/auth-background";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { CartButton } from "@/components/cart/cart-button";
 import { MobileNavMenu } from "@/components/navigation/mobile-nav-menu";
@@ -28,19 +29,12 @@ export async function LandingHero() {
 
   return (
     <section className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-[#0c0e10] text-white">
-      <Image
-        src="/hero-bg.png"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-center"
-      />
-      <div className="absolute inset-0 bg-black/45" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.15)_38%,rgba(0,0,0,0.55)_100%)]" />
+      <AuthBackground />
+      <div className="absolute inset-0 bg-black/75" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.5)_0%,rgba(0,0,0,0.42)_42%,rgba(0,0,0,0.6)_100%)]" />
 
       <header className="relative z-20 flex items-center justify-between px-6 py-5 sm:px-10 lg:px-14">
-        <BrandMark tone="light" className="h-16 md:h-20" />
+        <BrandMark tone="light" className="h-24 md:h-20" />
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex" aria-label="Primary">
           {navLinks.map((link) => (
             <a
@@ -113,12 +107,21 @@ export async function LandingHero() {
         </div>
       </div>
       <style>{`
-        .hero-books { gap: 8px; flex-wrap: nowrap; justify-content: center; }
-        .hero-shelf { width: calc((100% - 24px) / 4); max-width: 76px; flex: none; }
+        .hero-books {
+          gap: 8px;
+          flex-wrap: nowrap;
+          justify-content: center;
+          width: calc(100% + 2rem);
+          margin-left: -1rem;
+          margin-right: -1rem;
+        }
+        .hero-shelf { width: calc((100% - 16px) / 3); flex: none; }
+        .hero-shelf:nth-child(4) { display: none; }
         .hero-feature { width: 168px; flex: none; }
         @media (min-width: 640px) {
-          .hero-books { gap: 16px; }
-          .hero-shelf { width: 120px; max-width: none; }
+          .hero-books { gap: 16px; width: auto; margin-left: 0; margin-right: 0; }
+          .hero-shelf { width: 120px; }
+          .hero-shelf:nth-child(4) { display: block; }
           .hero-feature { width: 200px; }
         }
         @media (min-width: 1024px) {

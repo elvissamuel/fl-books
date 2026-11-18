@@ -16,7 +16,7 @@ export function BrandMark({
       alt="AFL"
       width={1559}
       height={1559}
-      sizes="(min-width: 768px) 80px, 64px"
+      sizes="(min-width: 768px) 80px, 96px"
       priority
       className={cn("h-24 w-auto", light && "brightness-0 invert", className)}
     />
