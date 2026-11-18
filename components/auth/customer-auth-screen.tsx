@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, X } from "lucide-react";
 import { saveCustomerSession } from "@/app/customer/session/actions";
 import type { CustomerOtpType } from "@/core/customers/public-api";
+import { AuthBackground } from "@/components/auth/auth-background";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import {
   forgotCustomerPassword,
@@ -231,7 +232,7 @@ export function CustomerAuthScreen({
 
   return (
     <main className={`${ptSerif.className} relative flex min-h-dvh items-center justify-center bg-[#0c0e10] p-4`}>
-      <Image src="/hero-bg.png" alt="" fill priority sizes="100vw" className="object-cover" />
+      <AuthBackground />
       <div className="absolute inset-0 bg-black/55" />
       <div className="relative grid w-full max-w-[820px] overflow-hidden rounded-[20px] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] md:grid-cols-2">
         <form
