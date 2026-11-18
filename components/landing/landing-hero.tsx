@@ -108,15 +108,29 @@ export async function LandingHero() {
       </div>
       <style>{`
         .hero-books {
-          gap: 8px;
+          gap: 6px;
           flex-wrap: nowrap;
           justify-content: center;
-          width: calc(100% + 2rem);
-          margin-left: -1rem;
-          margin-right: -1rem;
+          width: calc(100% + 3rem);
+          margin-left: -1.5rem;
+          margin-right: -1.5rem;
         }
-        .hero-shelf { width: calc((100% - 16px) / 3); flex: none; }
+        .hero-shelf {
+          width: calc((100% - 12px) / 3);
+          flex: none;
+          overflow: hidden;
+        }
         .hero-shelf:nth-child(4) { display: none; }
+        .hero-shelf img {
+          object-view-box: none !important;
+          width: 193.05% !important;
+          height: 119.33% !important;
+          max-width: none !important;
+          left: -52.91% !important;
+          top: -13.84% !important;
+          right: auto !important;
+          bottom: auto !important;
+        }
         .hero-feature { width: 168px; flex: none; }
         @media (min-width: 640px) {
           .hero-books { gap: 16px; width: auto; margin-left: 0; margin-right: 0; }
@@ -133,8 +147,19 @@ export async function LandingHero() {
             margin-right: -3.5rem;
             padding-right: 4rem;
           }
-          .hero-shelf { width: clamp(156px, 13.6vw, 204px); }
+          .hero-shelf { width: clamp(156px, 13.6vw, 204px); overflow: visible; }
           .hero-shelf:first-child { margin-left: 0; }
+          .hero-shelf img,
+          .hero-feature img {
+            object-view-box: inset(11.6% 20.8% 4.6% 27.4%) !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            left: 0 !important;
+            top: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+          }
           .hero-feature { width: clamp(280px, 24vw, 364px); }
         }
       `}</style>
