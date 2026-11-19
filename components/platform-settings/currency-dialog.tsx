@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { X } from "lucide-react";
 import { NumberStepper, formatStepperValue } from "@/components/platform-settings/number-stepper";
 import type { Currency, CurrencyWriteRequest } from "@/core/currencies/currency";
-import { currencyChoices } from "@/infrastructure/platform-settings/platform-settings-api";
 
 const controlClass =
   "h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-brand focus:ring-2 focus:ring-brand/15";
@@ -22,13 +21,9 @@ export function CurrencyDialog({
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
+  const [name, setName] = useState(currency?.currencyName ?? "");
   const [code, setCode] = useState(currency?.currencyCode ?? "");
-  const [baseCurrency, setBaseCurrency] = useState("NGN");
   const [rate, setRate] = useState(formatStepperValue(currency?.exchangeRate ?? 0));
-  const choices =
-    currency && !currencyChoices.some((choice) => choice.code === currency.currencyCode)
-      ? [{ code: currency.currencyCode, name: currency.currencyName }, ...currencyChoices]
-      : currencyChoices;
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
@@ -41,16 +36,18 @@ export function CurrencyDialog({
   }, [onClose, pending]);
 
   function saveCurrency() {
-    const choice = choices.find((item) => item.code === code);
-    if (!choice || !baseCurrency.trim()) {
-      setFormError("Select a currency and enter the conversion rate.");
+    const currencyName = name.trim();
+    const currencyCode = code.trim();
+    const exchangeRate = Number.parseFloat(rate.replace(/,/g, ""));
+    if (!currencyName || !currencyCode || !Number.isFinite(exchangeRate)) {
+      setFormError("Enter the currency name, code, and conversion rate.");
       return;
     }
     setFormError("");
     onSave({
-      currencyCode: choice.code,
-      currencyName: choice.name,
-      exchangeRate: Number.parseFloat(rate.replace(/,/g, "")) || 0,
+      currencyCode,
+      currencyName,
+      exchangeRate,
       active: currency?.active ?? true,
     });
   }
@@ -96,37 +93,29 @@ export function CurrencyDialog({
         >
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
           <div>
-            <label htmlFor="currency-code" className="mb-1.5 block text-[13px] font-medium text-neutral-900">
-              Select Currency
+            <label htmlFor="currency-name" className="mb-1.5 block text-[13px] font-medium text-neutral-900">
+              Currency name
               <span className="text-[#e11d48]">*</span>
             </label>
-            <div className="relative">
-              <select
-                id="currency-code"
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                className={`${controlClass} appearance-none pr-8`}
-              >
-                <option value="">Select</option>
-                {choices.map((choice) => (
-                  <option key={choice.code} value={choice.code}>
-                    {choice.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-neutral-500" />
-            </div>
+            <input
+              id="currency-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Enter currency name"
+              className={controlClass}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="currency-base" className="mb-1.5 block text-[13px] font-medium text-neutral-900">
-                Base Currency
+              <label htmlFor="currency-code" className="mb-1.5 block text-[13px] font-medium text-neutral-900">
+                Currency code
                 <span className="text-[#e11d48]">*</span>
               </label>
               <input
-                id="currency-base"
-                value={baseCurrency}
-                onChange={(event) => setBaseCurrency(event.target.value)}
+                id="currency-code"
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
+                placeholder="Enter currency code"
                 className={controlClass}
               />
             </div>

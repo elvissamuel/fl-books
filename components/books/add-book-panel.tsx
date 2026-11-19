@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toaster";
 import {
   bookDraftFromCatalog,
   createBookRequestFromDraft,
@@ -136,8 +137,11 @@ export function AddBookPanel({
         return;
       }
       createBook.mutate(result.request, {
-        onSuccess: onSaved,
-        onError: (error) => setFormError(error.message),
+        onSuccess: (saved) => {
+          toast.success(saved.message || "Book added.");
+          onSaved();
+        },
+        onError: (error) => toast.error(error.message),
       });
       return;
     }
@@ -150,8 +154,11 @@ export function AddBookPanel({
     updateBook.mutate(
       { bookId, request: result.request },
       {
-        onSuccess: onSaved,
-        onError: (error) => setFormError(error.message),
+        onSuccess: (saved) => {
+          toast.success(saved.message || "Book updated.");
+          onSaved();
+        },
+        onError: (error) => toast.error(error.message),
       },
     );
   }

@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { Plus, X } from "lucide-react";
+import { toast } from "@/components/ui/toaster";
 import { useUploadPrivateFile } from "@/features/files/use-files";
 import type { PrivateTestimonial } from "@/core/testimonials/private-api";
 import {
@@ -36,7 +37,6 @@ export function AddTestimonyPanel({
   const [imageUrl, setImageUrl] = useState(testimonial?.imageUrl ?? "");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [formError, setFormError] = useState("");
   const pending =
     createTestimonial.isPending || updateTestimonial.isPending || uploadPhoto.isPending;
 
@@ -68,7 +68,6 @@ export function AddTestimonyPanel({
   }, [photo]);
 
   async function saveTestimony() {
-    setFormError("");
     try {
       let nextImageUrl = imageUrl;
       if (photo) {
@@ -87,14 +86,14 @@ export function AddTestimonyPanel({
         imageUrl: nextImageUrl,
       };
 
-      if (mode === "edit" && testimonial) {
-        await updateTestimonial.mutateAsync({ testimonialId: testimonial.id, request });
-      } else {
-        await createTestimonial.mutateAsync(request);
-      }
+      const saved =
+        mode === "edit" && testimonial
+          ? await updateTestimonial.mutateAsync({ testimonialId: testimonial.id, request })
+          : await createTestimonial.mutateAsync(request);
+      toast.success(saved.message || (mode === "edit" ? "Testimony updated." : "Testimony added."));
       onSaved();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Request failed.");
+      toast.error(error instanceof Error ? error.message : "Request failed.");
     }
   }
 
@@ -135,7 +134,6 @@ export function AddTestimonyPanel({
             void saveTestimony();
           }}
         >
-          {formError ? <p className="text-sm text-danger">{formError}</p> : null}
           <div className="flex items-stretch gap-4">
             <button
               type="button"

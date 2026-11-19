@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { toast } from "@/components/ui/toaster";
 import { CountryFlag } from "@/components/dashboard/country-flag";
 import type { ShippingCountry } from "@/core/dashboard/types";
 import type {
@@ -149,8 +150,11 @@ export function AddDeliveryOutletDialog({
     }
     setFormError("");
     const options = {
-      onSuccess: onSaved,
-      onError: (error: Error) => setFormError(error.message),
+      onSuccess: (saved: { message?: string }) => {
+        toast.success(saved.message || (editing ? "Delivery outlet updated." : "Delivery outlet added."));
+        onSaved();
+      },
+      onError: (error: Error) => toast.error(error.message),
     };
     if (editing && outlet) {
       updateOutlet.mutate({ outletId: outlet.id, request }, options);

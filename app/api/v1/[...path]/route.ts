@@ -28,6 +28,10 @@ function isPickupLocationList(path: string[]) {
   return path[0] === "pickup-locations" && path[1] === "private" && path.length === 2;
 }
 
+function isDeliveryOutletList(path: string[]) {
+  return path[0] === "delivery-outlets" && path[1] === "private" && path.length === 2;
+}
+
 function isPaymentVerify(path: string[]) {
   return path[0] === "payments" && path[1] === "private" && path[2] === "verify";
 }
@@ -108,7 +112,10 @@ async function forward(request: NextRequest, context: { params: Promise<{ path: 
     }
     headers.set("Authorization", `Bearer ${customer.accessToken}`);
     usedCustomerSession = true;
-  } else if (isPickupLocationList(path) && request.method.toUpperCase() === "GET") {
+  } else if (
+    (isPickupLocationList(path) || isDeliveryOutletList(path)) &&
+    request.method.toUpperCase() === "GET"
+  ) {
     const admin = await getAdminSession();
     if (admin) {
       headers.set("Authorization", `Bearer ${admin.accessToken}`);

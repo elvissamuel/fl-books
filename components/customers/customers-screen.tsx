@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { toast } from "@/components/ui/toaster";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { CustomerStatusDialog } from "@/components/customers/customer-status-dialog";
 import { CustomerViewPanel } from "@/components/customers/customer-view-panel";
@@ -43,7 +44,6 @@ export function CustomersScreen() {
   const [page, setPage] = useState(1);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [statusChange, setStatusChange] = useState<StatusChange | null>(null);
-  const [actionError, setActionError] = useState("");
   const activateCustomer = useActivateAdminCustomer();
   const deactivateCustomer = useDeactivateAdminCustomer();
   const customers = useFilteredAdminCustomers({
@@ -113,7 +113,6 @@ export function CustomersScreen() {
       {customers.error instanceof Error ? (
         <p className="mb-3 text-sm text-danger">{customers.error.message}</p>
       ) : null}
-      {actionError ? <p className="mb-3 text-sm text-danger">{actionError}</p> : null}
       {customers.isLoading ? (
         <CustomersTableSkeleton />
       ) : (
@@ -143,19 +142,19 @@ export function CustomersScreen() {
           onClose={() => setStatusChange(null)}
           onConfirm={() => {
             const change = statusChange;
-            setActionError("");
-            const task =
-              change.action === "activate"
-                ? activateCustomer.mutateAsync(change.customer.customerId)
-                : deactivateCustomer.mutateAsync(change.customer.customerId);
+            const activating = change.action === "activate";
+            const task = activating
+              ? activateCustomer.mutateAsync(change.customer.customerId)
+              : deactivateCustomer.mutateAsync(change.customer.customerId);
             task
-              .then(() => {
+              .then((saved) => {
+                toast.success(saved.message || (activating ? "Customer activated." : "Customer deactivated."));
                 setStatusChange(null);
                 return queryClient.invalidateQueries({ queryKey: customersKeys.all });
               })
               .catch((error: unknown) => {
                 setStatusChange(null);
-                setActionError(error instanceof Error ? error.message : "Request failed.");
+                toast.error(error instanceof Error ? error.message : "Request failed.");
               });
           }}
         />

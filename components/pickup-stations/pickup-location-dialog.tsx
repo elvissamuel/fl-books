@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { toast } from "@/components/ui/toaster";
 import type {
   PickupLocation,
   PickupLocationStatus,
@@ -65,8 +66,11 @@ export function PickupLocationDialog({
     }
     setFormError("");
     const options = {
-      onSuccess: onSaved,
-      onError: (error: Error) => setFormError(error.message),
+      onSuccess: (saved: { message?: string }) => {
+        toast.success(saved.message || (editing ? "Pickup location updated." : "Pickup location added."));
+        onSaved();
+      },
+      onError: (error: Error) => toast.error(error.message),
     };
     if (editing && location) {
       updateLocation.mutate({ locationId: location.id, request }, options);

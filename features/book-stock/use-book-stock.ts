@@ -28,8 +28,17 @@ export function usePrivateBookStockSummary(bookId: string) {
 export function useAddPrivateBookStock() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ bookId, request }: { bookId: string; request: AddBookStockRequest }) =>
-      unwrapAction(await addPrivateBookStock(bookId, request)),
+    mutationFn: async ({ bookId, request }: { bookId: string; request: AddBookStockRequest }) => {
+      const result = await addPrivateBookStock(bookId, request);
+      if (!result.ok) {
+        if (result.sessionExpired) {
+          window.location.assign("/admin/login");
+          return new Promise<never>(() => {});
+        }
+        throw new Error(result.message);
+      }
+      return result;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: bookStockKeys.all }),
   });
 }

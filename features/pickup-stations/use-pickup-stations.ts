@@ -21,6 +21,7 @@ import type {
 } from "@/core/pickup-stations/types";
 import { pickupStationKeys } from "@/features/pickup-stations/query-keys";
 import { unwrapAction } from "@/features/auth/unwrap-action";
+import type { ActionResult } from "@/infrastructure/http/browser-api";
 import {
   deliveryOutletsApi,
   listDeliveryOutlets,
@@ -103,22 +104,34 @@ export function usePickupLocationStatistics(enabled = true) {
   });
 }
 
+async function responseWithMessage<T>(result: Promise<ActionResult<T>>) {
+  const settled = await result;
+  if (!settled.ok) {
+    if (settled.sessionExpired) {
+      window.location.assign("/admin/login");
+      return new Promise<never>(() => {});
+    }
+    throw new Error(settled.message);
+  }
+  return settled;
+}
+
 export function useCreatePrivatePickupLocation() {
   return useMutation({
-    mutationFn: async (request: CreatePickupLocationRequest) =>
-      unwrapAction(await createPrivatePickupLocation(request)),
+    mutationFn: (request: CreatePickupLocationRequest) =>
+      responseWithMessage(createPrivatePickupLocation(request)),
   });
 }
 
 export function useUpdatePrivatePickupLocation() {
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       locationId,
       request,
     }: {
       locationId: string;
       request: UpdatePickupLocationRequest;
-    }) => unwrapAction(await updatePrivatePickupLocation(locationId, request)),
+    }) => responseWithMessage(updatePrivatePickupLocation(locationId, request)),
   });
 }
 
@@ -136,7 +149,7 @@ export function useUpdatePrivatePickupLocationStatus() {
 
 export function useDeletePrivatePickupLocation() {
   return useMutation({
-    mutationFn: async (locationId: string) => unwrapAction(await deletePrivatePickupLocation(locationId)),
+    mutationFn: (locationId: string) => responseWithMessage(deletePrivatePickupLocation(locationId)),
   });
 }
 
@@ -173,20 +186,20 @@ export function useDeliveryOutletStatistics(enabled = true) {
 
 export function useCreatePrivateDeliveryOutlet() {
   return useMutation({
-    mutationFn: async (request: DeliveryOutletWriteRequest) =>
-      unwrapAction(await createPrivateDeliveryOutlet(request)),
+    mutationFn: (request: DeliveryOutletWriteRequest) =>
+      responseWithMessage(createPrivateDeliveryOutlet(request)),
   });
 }
 
 export function useUpdatePrivateDeliveryOutlet() {
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       outletId,
       request,
     }: {
       outletId: string;
       request: DeliveryOutletWriteRequest;
-    }) => unwrapAction(await updatePrivateDeliveryOutlet(outletId, request)),
+    }) => responseWithMessage(updatePrivateDeliveryOutlet(outletId, request)),
   });
 }
 
@@ -199,6 +212,6 @@ export function useUpdatePrivateDeliveryOutletStatus() {
 
 export function useDeletePrivateDeliveryOutlet() {
   return useMutation({
-    mutationFn: async (outletId: string) => unwrapAction(await deletePrivateDeliveryOutlet(outletId)),
+    mutationFn: (outletId: string) => responseWithMessage(deletePrivateDeliveryOutlet(outletId)),
   });
 }

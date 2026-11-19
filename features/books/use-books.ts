@@ -39,14 +39,33 @@ export function usePrivateBook(bookId: string) {
 
 export function useCreatePrivateBook() {
   return useMutation({
-    mutationFn: async (request: CreateBookRequest) => unwrapAction(await createPrivateBook(request)),
+    mutationFn: async (request: CreateBookRequest) => {
+      const result = await createPrivateBook(request);
+      if (!result.ok) {
+        if (result.sessionExpired) {
+          window.location.assign("/admin/login");
+          return new Promise<never>(() => {});
+        }
+        throw new Error(result.message);
+      }
+      return result;
+    },
   });
 }
 
 export function useUpdatePrivateBook() {
   return useMutation({
-    mutationFn: async ({ bookId, request }: { bookId: string; request: UpdateBookRequest }) =>
-      unwrapAction(await updatePrivateBook(bookId, request)),
+    mutationFn: async ({ bookId, request }: { bookId: string; request: UpdateBookRequest }) => {
+      const result = await updatePrivateBook(bookId, request);
+      if (!result.ok) {
+        if (result.sessionExpired) {
+          window.location.assign("/admin/login");
+          return new Promise<never>(() => {});
+        }
+        throw new Error(result.message);
+      }
+      return result;
+    },
   });
 }
 
