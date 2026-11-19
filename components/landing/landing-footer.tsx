@@ -42,7 +42,7 @@ export function LandingFooter() {
       <footer className="bg-[#111116] text-white">
         <div className="mx-auto grid max-w-[1180px] gap-10 px-6 py-12 sm:px-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr] lg:px-14">
           <div>
-            <BrandMark tone="light" className="h-7" />
+            <BrandMark tone="light" className="h-28" />
             <p className="mt-4 max-w-[280px] text-[13.5px] leading-6 text-white/65">
               The official authoritative home for all books by Femi Lazarus. Read by leaders worldwide.
             </p>
@@ -57,10 +57,6 @@ export function LandingFooter() {
               </SocialIcon>
               <SocialIcon label="Facebook">
                 <path d="M14 9h2.2V6.2H14c-2.3 0-3.8 1.4-3.8 3.9V12H8v2.8h2.2V20h2.8v-5.2h2.3L16 12h-2.8v-1.5c0-.6.3-1.5.8-1.5z" />
-              </SocialIcon>
-              <SocialIcon label="Podcast">
-                <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 1 0-6 0v4a3 3 0 0 0 3 3z" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                <path d="M7 11a5 5 0 0 0 10 0M12 16v3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               </SocialIcon>
             </div>
           </div>
