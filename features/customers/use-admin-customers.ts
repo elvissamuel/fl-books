@@ -43,13 +43,32 @@ export function useDeleteAdminCustomer() {
 
 export function useDeactivateAdminCustomer() {
   return useMutation({
-    mutationFn: async (customerId: string) =>
-      unwrapAction(await deactivateAdminCustomer(customerId)),
+    mutationFn: async (customerId: string) => {
+      const result = await deactivateAdminCustomer(customerId);
+      if (!result.ok) {
+        if (result.sessionExpired) {
+          window.location.assign("/admin/login");
+          return new Promise<never>(() => {});
+        }
+        throw new Error(result.message);
+      }
+      return result;
+    },
   });
 }
 
 export function useActivateAdminCustomer() {
   return useMutation({
-    mutationFn: async (customerId: string) => unwrapAction(await activateAdminCustomer(customerId)),
+    mutationFn: async (customerId: string) => {
+      const result = await activateAdminCustomer(customerId);
+      if (!result.ok) {
+        if (result.sessionExpired) {
+          window.location.assign("/admin/login");
+          return new Promise<never>(() => {});
+        }
+        throw new Error(result.message);
+      }
+      return result;
+    },
   });
 }

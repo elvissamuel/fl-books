@@ -7,9 +7,9 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { AddTestimonyPanel } from "@/components/testimonials/add-testimony-panel";
 import { TestimonialsTable, TestimonialsTableSkeleton } from "@/components/testimonials/testimonials-table";
-import { TestimonyAddedDialog } from "@/components/testimonials/testimony-added-dialog";
 import { TestimonyDeleteDialog } from "@/components/testimonials/testimony-delete-dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toaster";
 import type { PrivateTestimonial } from "@/core/testimonials/private-api";
 import { testimonialKeys } from "@/features/testimonials/query-keys";
 import {
@@ -27,8 +27,6 @@ export function TestimonialsScreen({ embedded = false }: { embedded?: boolean })
     { mode: "create" } | { mode: "edit"; testimonial: PrivateTestimonial } | null
   >(null);
   const [editRequestId, setEditRequestId] = useState("");
-  const [added, setAdded] = useState(false);
-  const [deleted, setDeleted] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<PrivateTestimonial | null>(null);
   const [actionError, setActionError] = useState("");
   const testimonials = usePrivateTestimonials({ page, size: pageSize });
@@ -62,15 +60,14 @@ export function TestimonialsScreen({ embedded = false }: { embedded?: boolean })
 
   async function confirmDelete() {
     if (!pendingDelete) return;
-    setActionError("");
     try {
-      await deleteTestimonial.mutateAsync(pendingDelete.id);
+      const saved = await deleteTestimonial.mutateAsync(pendingDelete.id);
+      toast.success(saved.message || "Testimony deleted.");
       if (rows.length === 1 && page > 1) setPage(page - 1);
       setPendingDelete(null);
       await refresh();
-      setDeleted(true);
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Request failed.");
+      toast.error(error instanceof Error ? error.message : "Request failed.");
       setPendingDelete(null);
     }
   }
@@ -141,9 +138,7 @@ export function TestimonialsScreen({ embedded = false }: { embedded?: boolean })
           testimonial={panel.mode === "edit" ? panel.testimonial : undefined}
           onClose={closePanel}
           onSaved={() => {
-            const created = panel.mode === "create";
             closePanel();
-            if (created) setAdded(true);
             void refresh();
           }}
         />
@@ -156,14 +151,6 @@ export function TestimonialsScreen({ embedded = false }: { embedded?: boolean })
             if (!deleteTestimonial.isPending) setPendingDelete(null);
           }}
           onConfirm={() => void confirmDelete()}
-        />
-      ) : null}
-      {added ? <TestimonyAddedDialog onDone={() => setAdded(false)} /> : null}
-      {deleted ? (
-        <TestimonyAddedDialog
-          title="Testimony Deleted Successfully"
-          description="You have successfully deleted a testimony."
-          onDone={() => setDeleted(false)}
         />
       ) : null}
     </div>

@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronLeft, ChevronUp, Phone, Search, User } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
 import type { PublicCustomer } from "@/core/customers/public-api";
+import type { PrivateDeliveryOutlet } from "@/core/pickup-stations/delivery-outlet-api";
 import type { PickupLocation } from "@/core/pickup-stations/private-api";
-import type { Currency } from "@/core/currencies/currency";
-import { listPublicCurrencies } from "@/infrastructure/currencies/public-currencies-actions";
+import type { Currency, CurrencyConversion } from "@/core/currencies/currency";
+import {
+  convertPublicCurrency,
+  listPublicCurrencies,
+} from "@/infrastructure/currencies/public-currencies-actions";
 import { browserApi } from "@/infrastructure/http/browser-api";
 import { checkoutPrivateOrder } from "@/infrastructure/orders/private-orders-actions";
+import { listPrivateDeliveryOutlets } from "@/infrastructure/pickup-stations/delivery-outlets-actions";
 import { listPrivatePickupLocations } from "@/infrastructure/pickup-stations/pickup-locations-actions";
 import { paymentVerifyKey } from "@/components/checkout/payment-return";
+import { toast } from "@/components/ui/toaster";
 
 const deliveryWindow = "Delivery between 21 August and 26 August";
 
@@ -21,6 +27,14 @@ type PaymentMethod = "paystack" | "flutterwave";
 function naira(value: number) {
   const digits = Math.round(value).toString();
   return `₦${digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+}
+
+function foreignAmount(value: number, code: string) {
+  const digits = value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${code} ${digits}`;
 }
 
 function RadioMark({ checked }: { checked: boolean }) {
@@ -66,6 +80,11 @@ export function CheckoutScreen() {
   const [areasMessage, setAreasMessage] = useState("");
   const [areasLoading, setAreasLoading] = useState(false);
   const [selectedArea, setSelectedArea] = useState<PickupLocation | null>(null);
+  const [outletsOpen, setOutletsOpen] = useState(false);
+  const [outlets, setOutlets] = useState<PrivateDeliveryOutlet[]>([]);
+  const [outletsMessage, setOutletsMessage] = useState("");
+  const [outletsLoading, setOutletsLoading] = useState(false);
+  const [selectedOutlet, setSelectedOutlet] = useState<PrivateDeliveryOutlet | null>(null);
   const [sameAsMe, setSameAsMe] = useState(false);
   const [profile, setProfile] = useState<PublicCustomer | null>(null);
   const [name, setName] = useState("");
@@ -76,6 +95,10 @@ export function CheckoutScreen() {
   const [currencyMessage, setCurrencyMessage] = useState("");
   const [paying, setPaying] = useState(false);
   const [checkoutMessage, setCheckoutMessage] = useState("");
+  const [converted, setConverted] = useState<CurrencyConversion | null>(null);
+  const [converting, setConverting] = useState(false);
+  const [convertMessage, setConvertMessage] = useState("");
+  const [nairaNoticeOpen, setNairaNoticeOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,8 +123,6 @@ export function CheckoutScreen() {
       const active = rows.filter((currency) => currency.active);
       const choices = active.length > 0 ? active : rows;
       setCurrencies(choices);
-      const naira = choices.find((currency) => currency.currencyCode === "NGN");
-      setCurrencyId((naira ?? choices[0]).id);
     });
     return () => {
       cancelled = true;
@@ -129,7 +150,7 @@ export function CheckoutScreen() {
   }, [query]);
 
   useEffect(() => {
-    if (!areasOpen) return;
+    if (method !== "pickup" || !areasOpen) return;
     let cancelled = false;
     setAreasLoading(true);
     setAreasMessage("");
@@ -153,35 +174,111 @@ export function CheckoutScreen() {
     return () => {
       cancelled = true;
     };
-  }, [areasOpen, debouncedQuery]);
+  }, [areasOpen, debouncedQuery, method]);
+
+  useEffect(() => {
+    if (method !== "delivery" || !outletsOpen) return;
+    let cancelled = false;
+    setOutletsLoading(true);
+    setOutletsMessage("");
+    listPrivateDeliveryOutlets({
+      page: 1,
+      size: 50,
+      status: "ACTIVE",
+      searchParams: debouncedQuery,
+    }).then((result) => {
+      if (cancelled) return;
+      setOutletsLoading(false);
+      if (!result.ok) {
+        setOutlets([]);
+        setOutletsMessage(result.sessionExpired ? "Sign in to choose a delivery outlet." : result.message);
+        return;
+      }
+      const rows = Array.isArray(result.data?.data) ? result.data.data : [];
+      setOutlets(rows);
+      if (rows.length === 0) {
+        setOutletsMessage(debouncedQuery.trim() ? "No outlets match that search." : "No delivery outlets are available.");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedQuery, method, outletsOpen]);
 
   const items = cart?.items ?? [];
   const subtotal = cart?.subtotal ?? 0;
   const weightSurcharge = 0;
   const tax = Math.round(subtotal * 0.075);
   const total = subtotal + weightSurcharge + tax;
+  const selectedCurrency = currencies.find((currency) => currency.id === currencyId) ?? null;
+  const payingInNaira = !selectedCurrency || selectedCurrency.currencyCode === "NGN";
+
+  useEffect(() => {
+    if (!selectedCurrency || selectedCurrency.currencyCode === "NGN" || total <= 0) {
+      setConverted(null);
+      setConvertMessage("");
+      setConverting(false);
+      return;
+    }
+    let cancelled = false;
+    setConverting(true);
+    setConvertMessage("");
+    convertPublicCurrency({
+      currencyCode: selectedCurrency.currencyCode,
+      nairaAmount: total,
+    }).then((result) => {
+      if (cancelled) return;
+      setConverting(false);
+      if (!result.ok) {
+        setConverted(null);
+        setConvertMessage(result.sessionExpired ? "Sign in to see this amount." : result.message);
+        return;
+      }
+      setConverted(result.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCurrency, total]);
 
   function goBack() {
     router.push("/cart");
   }
 
+  function paymentBlocker() {
+    if (items.length === 0) return "Add a book to your cart before payment.";
+    const locationId = method === "pickup" ? selectedArea?.id : selectedOutlet?.id;
+    if (!locationId) {
+      return method === "pickup" ? "Choose your area before payment." : "Choose a delivery outlet before payment.";
+    }
+    if (!sameAsMe && (!name.trim() || !phone.trim())) return "Add the recipient name and phone number.";
+    if (!currencyId) return currencyMessage || "Select a currency.";
+    return "";
+  }
+
+  function requestPayment() {
+    const blocker = paymentBlocker();
+    if (blocker) {
+      setCheckoutMessage(blocker);
+      return;
+    }
+    setCheckoutMessage("");
+    const code = (selectedCurrency?.currencyCode ?? "").trim().toUpperCase();
+    if (payment === "paystack" && code !== "NGN" && code !== "USD") {
+      setNairaNoticeOpen(true);
+      return;
+    }
+    void pay();
+  }
+
   async function pay() {
-    if (items.length === 0) {
-      setCheckoutMessage("Add a book to your cart before payment.");
+    const blocker = paymentBlocker();
+    if (blocker) {
+      setCheckoutMessage(blocker);
       return;
     }
-    if (!selectedArea) {
-      setCheckoutMessage("Choose your area before payment.");
-      return;
-    }
-    if (!sameAsMe && (!name.trim() || !phone.trim())) {
-      setCheckoutMessage("Add the recipient name and phone number.");
-      return;
-    }
-    if (!currencyId) {
-      setCheckoutMessage(currencyMessage || "Select a currency.");
-      return;
-    }
+    const locationId = method === "pickup" ? selectedArea?.id : selectedOutlet?.id;
+    if (!locationId || !currencyId) return;
 
     setPaying(true);
     setCheckoutMessage("");
@@ -191,9 +288,7 @@ export function CheckoutScreen() {
       const profileResult = await browserApi<PublicCustomer>("/api/v1/customer/private/profile");
       if (!profileResult.ok) {
         setPaying(false);
-        setCheckoutMessage(
-          profileResult.sessionExpired ? "Sign in to continue to payment." : profileResult.message,
-        );
+        toast.error(profileResult.sessionExpired ? "Sign in to continue to payment." : profileResult.message);
         return;
       }
       customer = profileResult.data;
@@ -203,24 +298,24 @@ export function CheckoutScreen() {
     const provider = payment === "paystack" ? "PAYSTACK" : "FLUTTERWAVE";
     const result = await checkoutPrivateOrder({
       userId: customer.userId,
-      pickUpLocationId: selectedArea.id,
+      pickUpLocationId: locationId,
       paymentClientServiceType: provider,
       recipientName: sameAsMe ? "" : name.trim(),
       recipientPhone: sameAsMe ? "" : phone.trim(),
-      logisticsType: method === "pickup" ? "PICKUP" : "DELIVERY",
+      logisticsType: method === "pickup" ? "PICK_UP" : "DELIVERY",
       sameAsMe,
       currencyId,
     });
     if (!result.ok) {
       setPaying(false);
-      setCheckoutMessage(result.sessionExpired ? "Sign in to continue to payment." : result.message);
+      toast.error(result.sessionExpired ? "Sign in to continue to payment." : result.message);
       return;
     }
 
     const started = result.data.payment;
     if (!started?.authorizationUrl || !started.reference) {
       setPaying(false);
-      setCheckoutMessage(started?.message || "Payment could not be started.");
+      toast.error(started?.message || result.message || "Payment could not be started.");
       return;
     }
 
@@ -270,7 +365,17 @@ export function CheckoutScreen() {
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setMethod(value)}
+                  onClick={() => {
+                    if (value === method) return;
+                    setMethod(value);
+                    setSelectedArea(null);
+                    setSelectedOutlet(null);
+                    setAreasOpen(false);
+                    setOutletsOpen(false);
+                    setQuery("");
+                    setDebouncedQuery("");
+                    setCheckoutMessage("");
+                  }}
                   className="flex w-full items-start gap-3 rounded-xl border border-[#e6e8ee] px-4 py-3 text-left"
                 >
                   <span className="mt-0.5">
@@ -286,6 +391,75 @@ export function CheckoutScreen() {
           </div>
         </section>
 
+        {method === "delivery" ? (
+          <section className="rounded-2xl border border-[#e7e9ee] bg-white px-4 py-4 sm:px-5">
+            <h2 className="text-[15px] font-semibold text-[#1c1f24]">Delivery outlet</h2>
+            <button
+              type="button"
+              onClick={() => setOutletsOpen((open) => !open)}
+              className="mt-3 flex w-full items-center justify-between gap-3 rounded-xl border border-[#e6e8ee] px-4 py-3 text-left text-[14px] text-[#1c1f24]"
+            >
+              {selectedOutlet ? (
+                <span>
+                  <span className="font-medium">{selectedOutlet.outletName}</span>
+                  {selectedOutlet.fullAddress ? (
+                    <span className="text-[#6d7480]"> ({selectedOutlet.fullAddress})</span>
+                  ) : null}
+                </span>
+              ) : (
+                <span className="text-[#9aa1ab]">Select a delivery outlet</span>
+              )}
+              {outletsOpen ? (
+                <ChevronUp className="size-4 shrink-0 text-[#8d939c]" />
+              ) : (
+                <ChevronDown className="size-4 shrink-0 text-[#8d939c]" />
+              )}
+            </button>
+            {outletsOpen ? (
+              <div className="mt-3 rounded-xl border border-[#e3e8f2] p-3">
+                <label className="flex h-11 items-center gap-2 rounded-lg border border-[#e6e8ee] px-3 text-[#9aa1ab]">
+                  <Search className="size-4" strokeWidth={1.75} />
+                  <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search"
+                    className="h-full w-full bg-transparent text-[14px] text-[#1c1f24] outline-none placeholder:text-[#b0b6bf]"
+                  />
+                </label>
+                <div className="mt-3 space-y-2">
+                  {outletsLoading ? <p className="px-1 py-3 text-[13px] text-[#9aa1ab]">Loading outlets...</p> : null}
+                  {outlets.map((outlet) => {
+                    const checked = outlet.id === selectedOutlet?.id;
+                    return (
+                      <button
+                        key={outlet.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedOutlet(outlet);
+                          setOutletsOpen(false);
+                        }}
+                        className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#e6e8ee] px-4 py-3 text-left"
+                      >
+                        <span>
+                          <span className="block text-[14px] font-semibold text-[#1c1f24]">{outlet.outletName}</span>
+                          {outlet.fullAddress ? (
+                            <span className="mt-0.5 block text-[12px] text-[#9aa1ab]">{outlet.fullAddress}</span>
+                          ) : null}
+                        </span>
+                        <RadioMark checked={checked} />
+                      </button>
+                    );
+                  })}
+                  {!outletsLoading && outletsMessage ? (
+                    <p className="px-1 py-3 text-[13px] text-[#9aa1ab]">{outletsMessage}</p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {method === "pickup" ? (
         <section className="rounded-2xl border border-[#e7e9ee] bg-white px-4 py-4 sm:px-5">
           <h2 className="text-[15px] font-semibold text-[#1c1f24]">Choose Your Area</h2>
           <button
@@ -348,6 +522,7 @@ export function CheckoutScreen() {
             </div>
           ) : null}
         </section>
+        ) : null}
 
         <section>
           <div className="flex items-center justify-between">
@@ -403,14 +578,26 @@ export function CheckoutScreen() {
                 onChange={(event) => setCurrencyId(event.target.value)}
                 className="mt-2 h-11 w-full rounded-lg border border-[#e6e8ee] bg-white px-3 text-[14px] text-[#1c1f24] outline-none"
               >
-                <option value="">Select a currency</option>
+                <option value="">Select currency</option>
                 {currencies.map((currency) => (
                   <option key={currency.id} value={currency.id}>
                     {currency.currencyCode} - {currency.currencyName}
                   </option>
                 ))}
               </select>
+              {selectedCurrency ? (
+                <span className="mt-2 block text-[13px] text-[#667085]">
+                  {payingInNaira
+                    ? `Amount to pay ${naira(total)}`
+                    : converting
+                      ? "Converting amount..."
+                      : converted
+                        ? `Amount to pay ${foreignAmount(converted.convertedAmount, converted.currencyCode)}`
+                        : "Amount to pay is unavailable."}
+                </span>
+              ) : null}
               {currencyMessage ? <span className="mt-2 block text-[12px] text-danger">{currencyMessage}</span> : null}
+              {convertMessage ? <span className="mt-2 block text-[12px] text-danger">{convertMessage}</span> : null}
             </label>
             <h3 className="mt-4 text-[14px] font-semibold text-[#1c1f24]">Select Payment Method</h3>
             <div className="mt-3">
@@ -478,17 +665,120 @@ export function CheckoutScreen() {
             <dt className="font-semibold text-[#1c1f24]">Total</dt>
             <dd className="font-semibold text-[#1c1f24]">{naira(total)}</dd>
           </div>
+          {selectedCurrency && !payingInNaira ? (
+            <div className="flex items-center justify-between border-t border-[#eceef2] pt-2">
+              <dt className="font-semibold text-[#1c1f24]">Amount to pay</dt>
+              <dd className="font-semibold text-[#1c1f24]">
+                {converting
+                  ? "..."
+                  : converted
+                    ? foreignAmount(converted.convertedAmount, converted.currencyCode)
+                    : "—"}
+              </dd>
+            </div>
+          ) : null}
         </dl>
         {checkoutMessage ? <p className="mt-3 text-[12px] text-danger">{checkoutMessage}</p> : null}
         <button
           type="button"
           disabled={paying || items.length === 0}
-          onClick={pay}
+          onClick={requestPayment}
           className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg bg-[#f47832] text-[14px] font-medium text-white hover:bg-[#e56d28] disabled:opacity-60"
         >
           {paying ? "Proceeding..." : "Proceed to Payment"}
         </button>
       </aside>
+      {nairaNoticeOpen ? (
+        <NairaPaymentNotice
+          amount={naira(total)}
+          foreignAmount={
+            converted ? foreignAmount(converted.convertedAmount, converted.currencyCode) : ""
+          }
+          pending={paying}
+          onClose={() => {
+            if (!paying) setNairaNoticeOpen(false);
+          }}
+          onConfirm={() => {
+            setNairaNoticeOpen(false);
+            void pay();
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function NairaPaymentNotice({
+  amount,
+  foreignAmount,
+  pending,
+  onClose,
+  onConfirm,
+}: {
+  amount: string;
+  foreignAmount: string;
+  pending: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    dialogRef.current?.focus();
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !pending) onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose, pending]);
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center px-4">
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default bg-black/40"
+        aria-label="Close payment notice"
+        onClick={onClose}
+      />
+      <section
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        tabIndex={-1}
+        className="relative w-full max-w-[400px] rounded-2xl bg-white px-7 pt-7 pb-6 text-center shadow-[0_18px_50px_rgba(17,24,22,0.18)] outline-none"
+      >
+        <h2 id={titleId} className="text-[17px] font-bold tracking-tight text-[#1c1f24]">
+          Pay the naira equivalent
+        </h2>
+        <p id={descriptionId} className="mx-auto mt-2 max-w-[300px] text-sm leading-5 text-[#667085]">
+          {foreignAmount
+            ? `Paystack will charge the naira equivalent of ${foreignAmount}.`
+            : "Paystack will charge the naira equivalent of this amount."}
+        </p>
+        <p className="mt-4 text-[22px] font-semibold text-[#1c1f24]">{amount}</p>
+        <div className="mt-6 flex gap-3">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onClose}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-[#e6e8ee] text-[14px] font-medium text-[#1c1f24] disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onConfirm}
+            className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-[#f47832] text-[14px] font-medium text-white hover:bg-[#e56d28] disabled:opacity-60"
+          >
+            Confirm
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

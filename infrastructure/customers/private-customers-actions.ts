@@ -28,6 +28,13 @@ export async function updateCustomerProfile(
   });
 }
 
+export async function updateOwnCustomerProfile(request: CustomerProfileUpdateRequest) {
+  return browserApi<CustomerProfile>("/api/v1/customer/private/profile", {
+    method: "PATCH",
+    json: request,
+  });
+}
+
 export async function changeCustomerPassword(
   accessToken: string,
   request: CustomerPasswordChangeRequest,

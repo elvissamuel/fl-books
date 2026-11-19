@@ -1,7 +1,9 @@
 import type { ApiResponse } from "@/core/auth/admin-api";
-import type { CustomerGender, PublicCustomer } from "@/core/customers/public-api";
+import type { CustomerAddress, CustomerGender, PublicCustomer } from "@/core/customers/public-api";
 
-export type CustomerProfile = PublicCustomer;
+export type CustomerProfile = PublicCustomer & {
+  address: CustomerAddress | null;
+};
 
 export type CustomerProfileUpdateRequest = {
   firstName: string;
@@ -11,6 +13,7 @@ export type CustomerProfileUpdateRequest = {
   gender: CustomerGender;
   profilePictureUrl: string;
   marketingEmailsEnabled: boolean;
+  address: CustomerAddress;
 };
 
 export type CustomerPasswordChangeRequest = {

@@ -3,7 +3,7 @@
 import type { ApiResponse } from "@/core/auth/admin-api";
 
 export type ActionResult<T> =
-  | { ok: true; data: T }
+  | { ok: true; data: T; message?: string }
   | { ok: false; message: string; sessionExpired?: boolean };
 
 type BrowserApiOptions = {
@@ -96,7 +96,7 @@ export async function browserApi<T>(
       return { ok: false, message };
     }
 
-    return { ok: true, data: payload.data };
+    return { ok: true, data: payload.data, message: payload.message || "" };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Request failed.";
     console.error("[api]", method, path, message);

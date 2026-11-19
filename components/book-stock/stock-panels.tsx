@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { BookCover } from "@/components/books/book-cover";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toaster";
 import { formatWeightFromGrams } from "@/core/books/format";
 import type { BookStockCount, BookStockSummary } from "@/core/books/stock-api";
 import { formatNaira } from "@/core/dashboard/format";
@@ -87,33 +88,28 @@ export function AddStockPanel({ book, onClose }: { book: BookStockCount; onClose
   const [quantity, setQuantity] = useState("1");
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
 
   async function submit() {
     const amount = Number(quantity);
     if (!Number.isInteger(amount) || amount < 1) {
-      setNotice("");
       setError("Enter a quantity of at least 1.");
       return;
     }
     if (!reason.trim()) {
-      setNotice("");
-      setError("Enter a reason.");
+      setError("Enter a note.");
       return;
     }
 
     setError("");
-    setNotice("");
     try {
-      const summary = await addStock.mutateAsync({
+      const result = await addStock.mutateAsync({
         bookId: book.id,
         request: { quantity: amount, reason: reason.trim() },
       });
-      setReason("");
-      setQuantity("1");
-      setNotice(`Stock added. Current available stock is ${count(summary.currentAvailableStock)}.`);
+      toast.success(result.message || "Stock added.");
+      onClose();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not add stock.");
+      toast.error(caught instanceof Error ? caught.message : "Could not add stock.");
     }
   }
 
@@ -140,20 +136,19 @@ export function AddStockPanel({ book, onClose }: { book: BookStockCount; onClose
         className="mt-1.5 h-10 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-800 outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
       />
 
-      <label className="mt-4 block text-sm font-medium text-neutral-900" htmlFor="stock-reason">
-        Reason
+      <label className="mt-4 block text-sm font-medium text-neutral-900" htmlFor="stock-note">
+        Note
       </label>
       <textarea
-        id="stock-reason"
+        id="stock-note"
         value={reason}
         onChange={(event) => setReason(event.target.value)}
-        placeholder="Enter a reason"
+        placeholder="Enter a note"
         rows={4}
         className="mt-1.5 w-full resize-none rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 outline-none placeholder:text-neutral-400 focus:border-brand focus:ring-2 focus:ring-brand/15"
       />
 
       {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-      {notice ? <p className="mt-3 text-sm text-emerald-700">{notice}</p> : null}
 
       <Button type="button" className="mt-5 h-10 w-full rounded-full" disabled={addStock.isPending} onClick={submit}>
         {addStock.isPending ? "Adding…" : "Add stock"}

@@ -45,8 +45,17 @@ export function usePrivateTestimonial(testimonialId: string) {
 
 export function useCreatePrivateTestimonial() {
   return useMutation({
-    mutationFn: async (request: TestimonialWriteRequest) =>
-      unwrapAction(await createPrivateTestimonial(request)),
+    mutationFn: async (request: TestimonialWriteRequest) => {
+      const result = await createPrivateTestimonial(request);
+      if (!result.ok) {
+        if (result.sessionExpired) {
+          window.location.assign("/admin/login");
+          return new Promise<never>(() => {});
+        }
+        throw new Error(result.message);
+      }
+      return result;
+    },
   });
 }
 
@@ -58,13 +67,32 @@ export function useUpdatePrivateTestimonial() {
     }: {
       testimonialId: string;
       request: TestimonialWriteRequest;
-    }) => unwrapAction(await updatePrivateTestimonial(testimonialId, request)),
+    }) => {
+      const result = await updatePrivateTestimonial(testimonialId, request);
+      if (!result.ok) {
+        if (result.sessionExpired) {
+          window.location.assign("/admin/login");
+          return new Promise<never>(() => {});
+        }
+        throw new Error(result.message);
+      }
+      return result;
+    },
   });
 }
 
 export function useDeletePrivateTestimonial() {
   return useMutation({
-    mutationFn: async (testimonialId: string) =>
-      unwrapAction(await deletePrivateTestimonial(testimonialId)),
+    mutationFn: async (testimonialId: string) => {
+      const result = await deletePrivateTestimonial(testimonialId);
+      if (!result.ok) {
+        if (result.sessionExpired) {
+          window.location.assign("/admin/login");
+          return new Promise<never>(() => {});
+        }
+        throw new Error(result.message);
+      }
+      return result;
+    },
   });
 }

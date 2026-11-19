@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MoreVertical } from "lucide-react";
+import { CircleCheck, CircleOff, Eye, MoreVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -203,10 +203,12 @@ export function CustomersTable({
                     </DropdownMenuItem>
                     {customer.active ? (
                       <DropdownMenuItem onSelect={() => onDeactivate(customer)}>
+                        <CircleOff className="size-4" />
                         Deactivate
                       </DropdownMenuItem>
                     ) : (
                       <DropdownMenuItem onSelect={() => onActivate(customer)}>
+                        <CircleCheck className="size-4" />
                         Activate
                       </DropdownMenuItem>
                     )}

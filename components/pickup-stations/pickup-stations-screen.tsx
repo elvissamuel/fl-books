@@ -20,6 +20,7 @@ import {
   PickupStationsTableSkeleton,
 } from "@/components/pickup-stations/pickup-stations-table";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toaster";
 import type {
   DeliveryOutletStatus,
   PrivateDeliveryOutlet,
@@ -166,22 +167,27 @@ export function PickupStationsScreen() {
 
   function removePickup(id: string, name: string) {
     if (!window.confirm(`Delete ${name}?`)) return;
-    setActionError("");
-    deletePickup.mutateAsync(id).then(() => refresh()).catch((error: unknown) => {
-      setActionError(error instanceof Error ? error.message : "Request failed.");
-    });
+    deletePickup
+      .mutateAsync(id)
+      .then((saved) => {
+        toast.success(saved.message || "Pickup location deleted.");
+        return refresh();
+      })
+      .catch((error: unknown) => {
+        toast.error(error instanceof Error ? error.message : "Request failed.");
+      });
   }
 
   async function confirmOutletDelete() {
     if (!pendingOutletDelete) return;
-    setActionError("");
     try {
-      await deleteOutlet.mutateAsync(pendingOutletDelete.id);
+      const saved = await deleteOutlet.mutateAsync(pendingOutletDelete.id);
+      toast.success(saved.message || "Delivery outlet deleted.");
       if (outletRows.length === 1 && page > 1) setPage(page - 1);
       setPendingOutletDelete(null);
       await refresh();
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Request failed.");
+      toast.error(error instanceof Error ? error.message : "Request failed.");
       setPendingOutletDelete(null);
     }
   }
