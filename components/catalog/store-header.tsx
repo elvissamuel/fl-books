@@ -18,14 +18,14 @@ export async function StoreHeader({ active = "Books" }: { active?: string | null
 
   return (
     <header className="relative z-20 flex items-center justify-between bg-white px-6 py-5 sm:px-10 lg:px-14">
-      <BrandMark className="h-24 md:h-20" />
+      <BrandMark className="h-24 md:h-32" />
       <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex" aria-label="Primary">
         {navLinks.map((link) => (
           <a
             key={link.label}
             href={link.href}
             className={cn(
-              "text-[13.5px] font-medium",
+              "text-[16px] font-medium",
               link.label === active ? "text-[#1c1f24]" : "text-[#6d7480] hover:text-[#1c1f24]",
             )}
           >
