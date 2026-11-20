@@ -49,9 +49,9 @@ export async function BestSellers() {
             return (
               <article
                 key={book.id}
-                className="group flex h-full flex-col items-center border bg-white px-4 py-4 text-center transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,24,40,0.08)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className="group flex h-full flex-col items-center overflow-hidden rounded-[12px] border bg-white px-2 pt-2 pb-2.5 text-center transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,24,40,0.08)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
-                <div className="relative aspect-[3/4] w-[78%] shrink-0">
+                <div className="relative aspect-square w-full shrink-0">
                   {cover ? (
                     <Image
                       src={cover}
@@ -62,16 +62,16 @@ export async function BestSellers() {
                     />
                   ) : null}
                 </div>
-                <div className="mt-4 flex h-3.5 shrink-0 justify-center">
+                <div className="mt-2 flex h-3.5 shrink-0 justify-center">
                   <StarRating />
                 </div>
-                <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] w-full text-[16px] leading-snug font-semibold text-[#1c1f24]">
+                <h3 className="mt-1.5 line-clamp-2 min-h-[2.75rem] w-full text-[16px] leading-snug font-semibold text-[#1c1f24]">
                   {book.title}
                 </h3>
-                <p className="mt-1.5 line-clamp-2 min-h-10 w-full text-[13px] leading-5 text-[#8d939c]">
+                <p className="mt-1 line-clamp-2 min-h-10 w-full text-[13px] leading-5 text-[#8d939c]">
                   {book.shortDescription}
                 </p>
-                <div className="mt-auto w-full max-w-[210px] pt-3">
+                <div className="mt-auto w-full max-w-[210px] pt-2">
                   <p className="text-[15px] font-semibold text-[#f47832]">{naira(book.price)}</p>
                   <AddToCartButton
                     bookId={book.id}

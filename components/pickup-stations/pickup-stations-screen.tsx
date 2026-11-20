@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Search } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { BooksPagination } from "@/components/books/books-pagination";
+import { BooksPagination, resultsLabel } from "@/components/books/books-pagination";
 import { AddDeliveryOutletDialog } from "@/components/pickup-stations/add-delivery-outlet-dialog";
 import {
   DeliveryOutletsGrid,
@@ -122,6 +122,8 @@ export function PickupStationsScreen() {
   const stationRows = Array.isArray(stations.data?.data) ? stations.data.data : [];
   const outletRows = Array.isArray(outlets.data?.data) ? outlets.data.data : [];
   const totalPages = Math.max(activeQuery.data?.totalPage ?? 1, 1);
+  const pageSize = pickup ? pickupPageSize : outletPageSize;
+  const totalElements = activeQuery.data?.totalElements ?? 0;
 
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: pickupStationKeys.all });
@@ -377,9 +379,7 @@ export function PickupStationsScreen() {
 
       {activeQuery.data ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-neutral-500">
-            Page {page} of {totalPages}
-          </p>
+          <p className="text-sm text-neutral-500">{resultsLabel(page, pageSize, totalElements)}</p>
           <BooksPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       ) : null}

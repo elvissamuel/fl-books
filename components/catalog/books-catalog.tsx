@@ -7,13 +7,6 @@ import { StarRating } from "@/components/landing/catalog-shared";
 import type { BookCategory } from "@/core/book-categories/category";
 import type { PublicBook } from "@/core/books/public-api";
 
-const bannerCovers = [
-  "/navigating_influence.png",
-  "/walk_in_power.png",
-  "/final_move_of_God.png",
-  "/the_man_of_the_spirit.png",
-] as const;
-
 function naira(value: number) {
   const digits = Math.round(value).toString();
   return `N${digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
@@ -52,14 +45,13 @@ export function BooksCatalog({
     <div>
       <StoreHeader />
       <section className="relative isolate h-[280px] overflow-hidden bg-[#101114] text-white sm:h-[320px]">
-        <div className="absolute inset-0 grid grid-cols-4">
-          {bannerCovers.map((src) => (
-            <div key={src} className="relative">
-              <Image src={src} alt="" fill sizes="25vw" className="object-cover" />
-            </div>
-          ))}
-        </div>
-        <div className="absolute inset-0 bg-black/60" />
+        <img
+          src="/animo-ticker-loop-720p.gif"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-black/55" />
         <h1 className="pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 text-center text-[64px] leading-none font-bold text-white sm:text-[80px]">
           Books
         </h1>
@@ -83,33 +75,39 @@ export function BooksCatalog({
           <p className="mt-8 text-sm text-[#8d939c]">No books found.</p>
         ) : null}
 
-        <div className="mt-8 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid items-stretch gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           {books.map((book) => {
             const cover = book.coverImageUrls.find((url) => url.startsWith("https://"));
             return (
               <article
                 key={book.id}
-                className="flex h-full flex-col rounded-[18px] bg-white px-4 pt-4 pb-5 shadow-[0_10px_28px_rgba(20,24,40,0.05)]"
+                className="group flex h-full flex-col items-center overflow-hidden rounded-[12px] border bg-white px-2 pt-2 pb-2.5 text-center transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,24,40,0.08)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
-                <div className="relative mx-auto aspect-[3/4] w-[78%] shrink-0">
+                <div className="relative aspect-square w-full shrink-0">
                   {cover ? (
-                    <Image src={cover} alt={book.title} fill sizes="240px" className="object-contain" />
+                    <Image
+                      src={cover}
+                      alt={book.title}
+                      fill
+                      sizes="280px"
+                      className="object-contain transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                    />
                   ) : null}
                 </div>
-                <div className="mt-4 flex h-3.5 shrink-0 justify-center">
+                <div className="mt-2 flex h-3.5 shrink-0 justify-center">
                   <StarRating />
                 </div>
-                <h2 className="mt-2 line-clamp-2 min-h-[2.75rem] text-center text-[16px] leading-snug font-semibold text-[#1c1f24]">
+                <h2 className="mt-1.5 line-clamp-2 min-h-[2.75rem] w-full text-[16px] leading-snug font-semibold text-[#1c1f24]">
                   {book.title}
                 </h2>
-                <p className="mt-1.5 line-clamp-2 min-h-10 text-center text-[13px] leading-5 text-[#8d939c]">
+                <p className="mt-1 line-clamp-2 min-h-10 w-full text-[13px] leading-5 text-[#8d939c]">
                   {book.shortDescription}
                 </p>
-                <div className="mt-auto pt-3">
-                  <p className="text-center text-[15px] font-semibold text-[#f47832]">{naira(book.price)}</p>
+                <div className="mt-auto w-full max-w-[210px] pt-2">
+                  <p className="text-[15px] font-semibold text-[#f47832]">{naira(book.price)}</p>
                   <AddToCartButton
                     bookId={book.id}
-                    className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#f47832] text-[13.5px] font-medium text-white hover:bg-[#e56d28] disabled:opacity-60"
+                    className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#f47832] text-[13.5px] font-medium text-white transition-colors duration-300 ease-out hover:bg-[#e56d28] disabled:opacity-60"
                   />
                 </div>
               </article>

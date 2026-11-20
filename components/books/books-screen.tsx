@@ -6,7 +6,7 @@ import { Plus, Search } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { AddBookPanel } from "@/components/books/add-book-panel";
 import { BookUploadedDialog } from "@/components/books/book-uploaded-dialog";
-import { BooksPagination } from "@/components/books/books-pagination";
+import { BooksPagination, resultsLabel } from "@/components/books/books-pagination";
 import { BooksTable, BooksTableSkeleton } from "@/components/books/books-table";
 import { CategoriesTable, CategoriesTableSkeleton } from "@/components/books/categories-table";
 import { CategoryAddedDialog } from "@/components/books/category-added-dialog";
@@ -244,8 +244,8 @@ export function BooksScreen() {
 
       {tab === "books" && pageData ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-neutral-500">
-            Page {page} of {Math.max(pageData.totalPage, 1)}
+          <p className="text-sm text-neutral-500">
+            {resultsLabel(page, pageSize, pageData.totalElements)}
           </p>
           <BooksPagination
             page={page}
@@ -259,8 +259,8 @@ export function BooksScreen() {
       ) : null}
       {tab === "categories" && categoryPageData ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-neutral-500">
-            Page {categoryPage} of {Math.max(categoryPageData.totalPage, 1)}
+          <p className="text-sm text-neutral-500">
+            {resultsLabel(categoryPage, pageSize, categoryPageData.totalElements)}
           </p>
           <BooksPagination
             page={categoryPage}

@@ -19,11 +19,11 @@ export function AuthorBanner() {
       <div className="landing-stagger relative z-10 mx-auto flex max-w-[760px] flex-col items-center px-6 py-16 text-center">
         <h2
           id="author-banner"
-          className="text-[30px] font-semibold tracking-[-0.03em] text-white sm:text-[40px]"
+          className="text-[34px] font-bold tracking-[-0.03em] text-white sm:text-[44px]"
         >
           One Voice, Many Lives Changed
         </h2>
-        <p className="mt-4 max-w-[640px] text-[14.5px] leading-6 text-white/90 sm:text-[15.5px]">
+        <p className="mt-4 max-w-[640px] text-[16px] leading-7 text-white/90 sm:text-[18px]">
           For over a decade, Femi Lazarus has written and spoken into the lives of thousands, equipping
           them with practical wisdom for faith, leadership, growth, and purposeful living.
         </p>

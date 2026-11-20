@@ -30,11 +30,11 @@ export function WhyShop() {
         <div className="landing-piece">
           <h2
             id="why-shop"
-            className="text-center text-[28px] font-semibold tracking-[-0.03em] text-[#1a1d21] sm:text-[32px]"
+            className="text-center text-[32px] font-bold tracking-[-0.03em] text-[#1a1d21] sm:text-[36px]"
           >
             Why Shop With Us
           </h2>
-          <p className="mx-auto mt-2 max-w-[640px] text-center text-[14px] leading-6 text-[#8d939c]">
+          <p className="mx-auto mt-2 max-w-[640px] text-center text-[16px] leading-7 text-[#8d939c] sm:text-[17px]">
             Every book, every order, every delivery, handled with the same care you&apos;ll find in the
             pages themselves.
           </p>

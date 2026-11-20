@@ -20,16 +20,16 @@ export function SectionHeading({
       <div className="min-w-0">
         <h2
           id={id}
-          className="relative inline-block pb-1 text-[22px] font-semibold tracking-[-0.02em] text-brand"
+          className="relative inline-block pb-1 text-[26px] font-bold tracking-[-0.02em] text-brand sm:text-[28px]"
         >
           {title}
           <span className="absolute bottom-0 left-0 h-[3px] w-11 rounded-full bg-[#fb7d48]" />
         </h2>
-        <p className="mt-2.5 text-[13.5px] leading-5 text-[#8d939c]">{subtitle}</p>
+        <p className="mt-2.5 text-[16px] leading-6 text-[#8d939c] sm:text-[17px]">{subtitle}</p>
       </div>
       <a
         href={href}
-        className="mb-0.5 inline-flex shrink-0 items-center gap-0.5 text-[13px] font-medium whitespace-nowrap text-[#9aa1ab] transition-colors duration-300 ease-out hover:text-brand"
+        className="mb-0.5 inline-flex shrink-0 items-center gap-0.5 text-[14px] font-medium whitespace-nowrap text-[#9aa1ab] transition-colors duration-300 ease-out hover:text-brand sm:text-[15px]"
       >
         See All
         <ChevronRight className="size-3.5" />

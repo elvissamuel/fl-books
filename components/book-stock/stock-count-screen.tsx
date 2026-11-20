@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { BooksPagination } from "@/components/books/books-pagination";
+import { BooksPagination, resultsLabel } from "@/components/books/books-pagination";
 import { AddStockPanel, StockDetailPanel } from "@/components/book-stock/stock-panels";
 import { StockCountTable, StockCountTableSkeleton } from "@/components/book-stock/stock-count-table";
 import type { BookStockCount } from "@/core/books/stock-api";
@@ -66,8 +66,8 @@ export function StockCountScreen() {
           />
           {pageData ? (
             <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-neutral-500">
-                Page {page} of {Math.max(pageData.totalPage, 1)}
+              <p className="text-sm text-neutral-500">
+                {resultsLabel(page, pageSize, pageData.totalElements)}
               </p>
               <BooksPagination page={page} totalPages={Math.max(pageData.totalPage, 1)} onPageChange={setPage} />
             </div>

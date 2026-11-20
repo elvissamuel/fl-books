@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { BooksPagination } from "@/components/books/books-pagination";
+import { BooksPagination, resultsLabel } from "@/components/books/books-pagination";
 import { AddTestimonyPanel } from "@/components/testimonials/add-testimony-panel";
 import { TestimonialsTable, TestimonialsTableSkeleton } from "@/components/testimonials/testimonials-table";
 import { TestimonyDeleteDialog } from "@/components/testimonials/testimony-delete-dialog";
@@ -124,8 +124,8 @@ export function TestimonialsScreen({ embedded = false }: { embedded?: boolean })
 
       {testimonials.data ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-neutral-500">
-            Page {page} of {totalPages}
+          <p className="text-sm text-neutral-500">
+            {resultsLabel(page, pageSize, testimonials.data.totalElements)}
           </p>
           <BooksPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>

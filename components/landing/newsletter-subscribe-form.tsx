@@ -37,7 +37,7 @@ export function NewsletterSubscribeForm() {
       onSubmit={submit}
       className="w-full max-w-[440px] rounded-[22px] bg-[#ffe5da] p-6 text-[#1c1f24] sm:p-7"
     >
-      <h3 className="text-[18px] font-semibold">Subscribe to Our Newsletter</h3>
+      <h3 className="text-[22px] font-bold">Subscribe to Our Newsletter</h3>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <label className="sr-only" htmlFor="newsletter-email">
           Email address

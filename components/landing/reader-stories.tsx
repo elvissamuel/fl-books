@@ -28,11 +28,11 @@ export async function ReaderStories() {
       <div className="landing-piece mx-auto max-w-[1180px]">
         <h2
           id="reader-stories"
-          className="text-center text-[26px] font-semibold tracking-[-0.03em] text-[#1a1d21] sm:text-[30px]"
+          className="text-center text-[30px] font-bold tracking-[-0.03em] text-[#1a1d21] sm:text-[34px]"
         >
           Words From Readers Whose Lives Were Marked
         </h2>
-        <p className="mx-auto mt-2 max-w-[560px] text-center text-[14px] leading-6 text-[#8d939c]">
+        <p className="mx-auto mt-2 max-w-[640px] text-center text-[16px] leading-7 text-[#8d939c] sm:text-[17px]">
           Real stories from people who found clarity, courage, and change in these pages.
         </p>
       </div>

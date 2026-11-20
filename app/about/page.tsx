@@ -18,16 +18,17 @@ export default function AboutPage() {
     <CartProvider>
       <main className={`${ptSerif.className} bg-white`}>
         <StoreHeader active="About Author" />
-        <section aria-label="About Author">
-          <h1 className="sr-only">About Author </h1>
-          <Image
-            src="/about-banner.png"
-            alt="About Author"
-            width={1440}
-            height={450}
-            priority
-            className="h-auto w-full"
+        <section className="relative isolate h-[280px] overflow-hidden bg-[#101114] sm:h-[360px] lg:h-[420px]" aria-label="About Author">
+          <img
+            src="/animo-wheel-carousel-720p.gif"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover object-center"
           />
+          <div className="absolute inset-0 bg-black/50" />
+          <h1 className="pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 px-4 text-center text-[40px] leading-none font-bold tracking-[0.08em] text-white uppercase drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-[56px] lg:text-[72px]">
+            About Author
+          </h1>
         </section>
         <section className="relative overflow-hidden">
           <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[52%] lg:block" aria-hidden="true">
@@ -35,13 +36,13 @@ export default function AboutPage() {
             <span className="absolute top-[34%] right-[-6%] size-[340px] rounded-full bg-[#f4f6f8]" />
             <span className="absolute bottom-[4%] left-[8%] size-[220px] rounded-full bg-[#e8ebef]" />
           </div>
-          <div className="relative mx-auto grid max-w-[1100px] items-center gap-10 px-6 py-16 sm:px-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-20">
-            <div className="max-w-[520px]">
-              <h2 className="text-[32px] font-semibold tracking-[-0.03em] text-[#1c1f24] sm:text-[40px]">
+          <div className="relative mx-auto grid max-w-[1200px] items-center gap-10 px-6 py-16 sm:px-10 lg:grid-cols-[minmax(0,1fr)_540px] lg:gap-14 lg:py-20">
+            <div className="max-w-[600px]">
+              <h2 className="text-[40px] font-bold tracking-[-0.03em] text-[#1c1f24] sm:text-[52px]">
                 Femi Lazarus
               </h2>
-              <p className="mt-5 text-[14.5px] leading-7 text-[#8b919a]">{bio}</p>
-              <div className="mt-6 flex items-center gap-4 text-[#1c1f24]">
+              <p className="mt-6 text-[17px] leading-8 text-[#8b919a] sm:text-[18px] sm:leading-9">{bio}</p>
+              <div className="mt-8 flex items-center gap-6 text-[#1c1f24]">
                 <SocialLink label="YouTube">
                   <path d="M10 9.2v5.6l4.8-2.8L10 9.2z" />
                   <rect x="3" y="6" width="18" height="12" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
@@ -61,7 +62,7 @@ export default function AboutPage() {
               alt="Femi Lazarus"
               width={688}
               height={726}
-              className="relative z-10 mx-auto w-full max-w-[420px]"
+              className="relative z-10 mx-auto w-full max-w-[540px]"
             />
           </div>
         </section>
@@ -74,7 +75,7 @@ export default function AboutPage() {
 function SocialLink({ label, children }: { label: string; children: ReactNode }) {
   return (
     <a href={`#${label.toLowerCase()}`} aria-label={label} className="text-[#1c1f24] hover:text-brand">
-      <svg viewBox="0 0 24 24" className="size-[18px]" aria-hidden="true" fill="currentColor">
+      <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true" fill="currentColor">
         {children}
       </svg>
     </a>
