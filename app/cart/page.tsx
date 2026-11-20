@@ -4,6 +4,7 @@ import { CartProvider } from "@/components/cart/cart-provider";
 import { StoreHeader } from "@/components/catalog/store-header";
 import { BestSellers } from "@/components/landing/best-sellers";
 import { catalogCanvas } from "@/components/landing/catalog-shared";
+import { LandingFooter } from "@/components/landing/landing-footer";
 import { ptSerif } from "@/lib/public-font";
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function CartPage() {
         <StoreHeader active={null} />
         <CartScreen />
         <BestSellers />
+        <LandingFooter />
       </main>
     </CartProvider>
   );
