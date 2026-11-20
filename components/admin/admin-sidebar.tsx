@@ -14,14 +14,16 @@ export function AdminSidebar() {
   return (
     <aside className="flex h-dvh w-[232px] shrink-0 flex-col bg-brand text-white">
       <div className="px-5 pt-6 pb-4">
-        <Image
-          src="/AFL-Books-04.png"
-          alt="AFL Books"
-          width={520}
-          height={280}
-          priority
-          className="h-14 w-auto mix-blend-screen"
-        />
+        <Link href="/" aria-label="AFL Books home" className="inline-flex">
+          <Image
+            src="/AFL-Books-04.png"
+            alt="AFL Books"
+            width={520}
+            height={280}
+            priority
+            className="h-14 w-auto mix-blend-screen"
+          />
+        </Link>
       </div>
       <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3" aria-label="Admin">
         {adminNavigation.map((item) => {
