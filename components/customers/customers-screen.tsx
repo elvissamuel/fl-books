@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { toast } from "@/components/ui/toaster";
-import { BooksPagination } from "@/components/books/books-pagination";
+import { BooksPagination, resultsLabel } from "@/components/books/books-pagination";
 import { CustomerStatusDialog } from "@/components/customers/customer-status-dialog";
 import { CustomerViewPanel } from "@/components/customers/customer-view-panel";
 import { CustomersTable, CustomersTableSkeleton } from "@/components/customers/customers-table";
@@ -57,7 +57,6 @@ export function CustomersScreen() {
   const rows = Array.isArray(customers.data?.data) ? customers.data.data : [];
   const totalElements = customers.data?.totalElements ?? 0;
   const totalPages = Math.max(customers.data?.totalPage ?? 1, 1);
-  const showPagination = totalElements >= 10;
 
   function updateSearch(value: string) {
     setSearch(value);
@@ -123,11 +122,9 @@ export function CustomersScreen() {
           onDeactivate={(customer) => setStatusChange({ customer, action: "deactivate" })}
         />
       )}
-      {showPagination ? (
+      {customers.data ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-neutral-500">
-            Page {page} of {totalPages}
-          </p>
+          <p className="text-sm text-neutral-500">{resultsLabel(page, pageSize, totalElements)}</p>
           <BooksPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       ) : null}

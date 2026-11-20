@@ -56,18 +56,18 @@ export function CartScreen() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1180px] px-6 py-8 sm:px-10 lg:px-14">
+    <div className="mx-auto w-full max-w-[1180px] px-6 py-8 sm:px-4">
       <button
         type="button"
         onClick={goBack}
-        className="inline-flex items-center gap-2 text-[22px] font-semibold text-[#1c1f24]"
+        className="inline-flex items-center gap-2 text-[26px] font-bold text-[#1c1f24]"
       >
-        <ChevronLeft className="size-5" strokeWidth={1.75} />
+        <ChevronLeft className="size-6" strokeWidth={1.75} />
         Cart ({items.length})
       </button>
 
       {items.length === 0 ? (
-        <div className="flex min-h-[520px] flex-col">
+        <div className="flex min-h-[280px] flex-col py-10">
           <div className="flex flex-1 flex-col items-center justify-center text-center">
             <span className="inline-flex size-24 items-center justify-center rounded-full bg-[#fff1ea] text-[#f47832]">
               <ShoppingCart className="size-9" strokeWidth={1.75} />
@@ -80,25 +80,35 @@ export function CartScreen() {
           </button>
         </div>
       ) : (
-        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="rounded-[18px] border border-[#eceef3] bg-white">
+        <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_400px]">
+          <div className="rounded-[20px] border border-[#eceef3] bg-white">
             {items.map((item) => {
               const cover = cartCover(item.coverImageUrls);
               const busy = busyId === item.cartItemId;
               return (
                 <article
                   key={item.cartItemId}
-                  className="flex gap-4 border-b border-[#f0f1f4] px-4 py-5 last:border-b-0 sm:px-5"
+                  className="flex gap-4 border-b border-[#f0f1f4] px-3 py-3 last:border-b-0 sm:gap-5 sm:px-4 sm:py-4"
                 >
-                  <div className="relative h-[96px] w-[74px] shrink-0 overflow-hidden rounded-lg bg-[#f4f6f8]">
-                    {cover ? <Image src={cover} alt="" fill sizes="74px" className="object-contain" /> : null}
+                  <div className="relative size-[120px] shrink-0 overflow-hidden rounded-xl bg-[#f4f6f8] sm:size-[140px]">
+                    {cover ? (
+                      <Image
+                        src={cover}
+                        alt=""
+                        fill
+                        sizes="140px"
+                        className="object-cover object-center"
+                      />
+                    ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <h2 className="text-[16px] font-semibold text-[#1c1f24]">{item.title}</h2>
+                        <h2 className="text-[20px] leading-snug font-bold text-[#1c1f24] sm:text-[22px]">
+                          {item.title}
+                        </h2>
                         {blurbs[item.bookId] ? (
-                          <p className="mt-1 line-clamp-1 text-[13px] text-[#9aa1ab]">{blurbs[item.bookId]}</p>
+                          <p className="mt-2 line-clamp-2 text-[16px] leading-7 text-[#9aa1ab]">{blurbs[item.bookId]}</p>
                         ) : null}
                       </div>
                       <button
@@ -108,22 +118,22 @@ export function CartScreen() {
                         onClick={() => remove(item.cartItemId)}
                         className="shrink-0 text-[#c5cad1] hover:text-[#e11d48] disabled:opacity-40"
                       >
-                        <Trash2 className="size-[18px]" strokeWidth={1.75} />
+                        <Trash2 className="size-5" strokeWidth={1.75} />
                       </button>
                     </div>
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <p className="text-[15px] font-semibold text-brand">{naira(item.unitPrice)}</p>
-                      <div className="flex items-center gap-2">
+                    <div className="mt-6 flex items-center justify-between gap-3">
+                      <p className="text-[18px] font-bold text-brand sm:text-[20px]">{naira(item.unitPrice)}</p>
+                      <div className="flex items-center gap-3">
                         <button
                           type="button"
                           aria-label="Decrease quantity"
                           disabled={busy || item.quantity <= 1}
                           onClick={() => changeQuantity(item.cartItemId, item.quantity - 1)}
-                          className="inline-flex size-8 items-center justify-center rounded-lg bg-[#fde8dc] text-[#c46a45] disabled:opacity-40"
+                          className="inline-flex size-10 items-center justify-center rounded-lg bg-[#fde8dc] text-[#c46a45] disabled:opacity-40"
                         >
-                          <Minus className="size-3.5" />
+                          <Minus className="size-4" />
                         </button>
-                        <span className="w-5 text-center text-[14px] font-semibold text-[#1c1f24]">
+                        <span className="w-7 text-center text-[16px] font-semibold text-[#1c1f24]">
                           {item.quantity}
                         </span>
                         <button
@@ -131,9 +141,9 @@ export function CartScreen() {
                           aria-label="Increase quantity"
                           disabled={busy}
                           onClick={() => changeQuantity(item.cartItemId, item.quantity + 1)}
-                          className="inline-flex size-8 items-center justify-center rounded-lg bg-[#f47832] text-white disabled:opacity-40"
+                          className="inline-flex size-10 items-center justify-center rounded-lg bg-[#f47832] text-white disabled:opacity-40"
                         >
-                          <Plus className="size-3.5" />
+                          <Plus className="size-4" />
                         </button>
                       </div>
                     </div>
@@ -143,24 +153,24 @@ export function CartScreen() {
             })}
           </div>
 
-          <aside className="rounded-[18px] border border-[#eceef3] bg-white p-5 lg:sticky lg:top-6">
-            <h2 className="border-b border-[#f0f1f4] pb-3 text-[16px] font-semibold text-[#1c1f24]">
+          <aside className="rounded-[20px] border border-[#eceef3] bg-white p-3 sm:p-4 lg:sticky lg:top-6">
+            <h2 className="border-b border-[#f0f1f4] pb-3 text-[22px] font-bold text-[#1c1f24] sm:text-[24px]">
               Order Summary
             </h2>
-            <dl className="mt-4 space-y-3 text-[14px]">
+            <dl className="mt-3 space-y-3 text-[16px] sm:text-[17px]">
               <div className="flex items-center justify-between">
                 <dt className="text-[#8d939c]">Subtotal</dt>
                 <dd className="font-medium text-[#1c1f24]">{naira(cart?.subtotal ?? 0)}</dd>
               </div>
-              <div className="flex items-center justify-between border-t border-[#f0f1f4] pt-3">
-                <dt className="font-semibold text-[#1c1f24]">Total</dt>
-                <dd className="font-semibold text-[#1c1f24]">{naira(cart?.subtotal ?? 0)}</dd>
+              <div className="flex items-center justify-between border-t border-[#f0f1f4] pt-4">
+                <dt className="font-bold text-[#1c1f24]">Total</dt>
+                <dd className="font-bold text-[#1c1f24]">{naira(cart?.subtotal ?? 0)}</dd>
               </div>
             </dl>
-            {message ? <p className="mt-3 text-[12px] text-danger">{message}</p> : null}
+            {message ? <p className="mt-4 text-[14px] text-danger">{message}</p> : null}
             <a
               href="/checkout"
-              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg bg-[#f47832] text-[14px] font-medium text-white hover:bg-[#e56d28]"
+              className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#f47832] text-[16px] font-medium text-white hover:bg-[#e56d28]"
             >
               Proceed to Checkout
             </a>

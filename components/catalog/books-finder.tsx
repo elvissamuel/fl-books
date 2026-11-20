@@ -54,22 +54,16 @@ export function BooksFinder({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="relative block">
           <span className="sr-only">Search books</span>
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-[#8d939c]" />
           <input
             id="book-search"
             name="search"
             value={term}
             onChange={(event) => setTerm(event.target.value)}
             placeholder="Search here..."
-            className="h-11 w-full rounded-full border border-[#e6e8ee] bg-[#f7f8fb] px-4 text-[13.5px] text-[#1c1f24] outline-none placeholder:text-[#b0b6bf] focus:border-brand focus:bg-white sm:w-[280px]"
+            className="h-11 w-full rounded-full border border-[#e6e8ee] bg-[#f7f8fb] py-0 pr-4 pl-10 text-[13.5px] text-[#1c1f24] outline-none placeholder:text-[#b0b6bf] focus:border-brand focus:bg-white sm:w-[280px]"
           />
         </label>
-        <button
-          type="submit"
-          aria-label="Search"
-          className="inline-flex size-11 items-center justify-center self-start rounded-full bg-brand text-white hover:bg-brand-hover"
-        >
-          <Search className="size-4" strokeWidth={2} />
-        </button>
         <div className="relative">
           <label className="sr-only" htmlFor="book-category">
             Categories

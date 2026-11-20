@@ -16,17 +16,15 @@ export default function ContactPage() {
     <CartProvider>
       <main className={ptSerif.className} style={{ backgroundColor: catalogCanvas }}>
         <StoreHeader active="Contact Us" />
-        <section className="relative h-[220px] overflow-hidden sm:h-[280px]" aria-label="Contact Us">
-          <Image
-            src="/hero-bg.png"
+        <section className="relative isolate h-[220px] overflow-hidden bg-[#101114] sm:h-[280px]" aria-label="Contact Us">
+          <img
+            src="/animo-wheel-carousel-720p.gif"
             alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-[center_30%]"
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-black/50" />
-          <h1 className="relative flex h-full items-center justify-center px-6 text-center text-[40px] font-semibold tracking-[-0.03em] text-white sm:text-[56px]">
+          <h1 className="relative z-10 flex h-full items-center justify-center px-6 text-center text-[40px] font-bold tracking-[0.08em] text-white uppercase drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] sm:text-[56px]">
             Contact Us
           </h1>
         </section>

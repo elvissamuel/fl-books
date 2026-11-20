@@ -21,10 +21,10 @@ export function LandingFooter() {
         <div className="absolute inset-0 bg-black/55" />
         <div className="landing-stagger relative mx-auto flex max-w-[1180px] flex-col gap-8 px-6 py-14 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-14 lg:py-16">
           <div className="max-w-[460px]">
-            <h2 id="contact-band" className="text-[28px] leading-tight font-semibold tracking-[-0.03em] sm:text-[32px]">
+            <h2 id="contact-band" className="text-[32px] leading-tight font-bold tracking-[-0.03em] sm:text-[36px]">
               Have A Question? We&apos;d Love To Hear From You
             </h2>
-            <p className="mt-3 max-w-[420px] text-[14.5px] leading-6 text-white/85">
+            <p className="mt-3 max-w-[420px] text-[16px] leading-7 text-white/85 sm:text-[17px]">
               Whether it&apos;s about an order, a book recommendation, or just to say hello, our team is
               one message away.
             </p>

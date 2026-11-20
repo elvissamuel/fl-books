@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { BooksPagination } from "@/components/books/books-pagination";
+import { BooksPagination, resultsLabel } from "@/components/books/books-pagination";
 import { GetInTouchTable, GetInTouchTableSkeleton } from "@/components/get-in-touch/get-in-touch-table";
 import { usePrivateGetInTouch } from "@/features/get-in-touch/use-get-in-touch";
 
@@ -56,8 +56,8 @@ export function GetInTouchScreen({ embedded = false }: { embedded?: boolean }) {
           <GetInTouchTable messages={rows} />
           {pageData ? (
             <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-neutral-500">
-                Page {page} of {Math.max(pageData.totalPage, 1)}
+              <p className="text-sm text-neutral-500">
+                {resultsLabel(page, pageSize, pageData.totalElements)}
               </p>
               <BooksPagination
                 page={page}

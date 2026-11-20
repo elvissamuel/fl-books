@@ -20,6 +20,14 @@ function visiblePages(current: number, total: number): PageToken[] {
   return ["ellipsis", current - 1, current, current + 1, "ellipsis"];
 }
 
+export function resultsLabel(page: number, size: number, total: number) {
+  if (total <= 0) return "Showing 0 of 0 results";
+  const start = (page - 1) * size + 1;
+  const end = Math.min(page * size, total);
+  const grouped = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `Showing ${start}-${end} of ${grouped} results`;
+}
+
 export function BooksPagination({
   page,
   totalPages,

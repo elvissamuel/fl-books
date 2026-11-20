@@ -4,6 +4,7 @@ import { CartButton } from "@/components/cart/cart-button";
 import { MobileNavMenu } from "@/components/navigation/mobile-nav-menu";
 import { CustomerNotificationBell } from "@/components/notifications/customer-notification-bell";
 import { getCustomerSession } from "@/infrastructure/auth/customer-session";
+import { customerNavPhotoUrl } from "@/infrastructure/customers/customer-nav-photo";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -15,6 +16,7 @@ const navLinks = [
 
 export async function StoreHeader({ active = "Books" }: { active?: string | null }) {
   const session = await getCustomerSession();
+  const pictureUrl = session ? await customerNavPhotoUrl(session.accessToken) : "";
 
   return (
     <header className="relative z-20 flex items-center justify-between bg-white px-6 py-5 sm:px-10 lg:px-14">
@@ -37,7 +39,7 @@ export async function StoreHeader({ active = "Books" }: { active?: string | null
         <MobileNavMenu active={active ?? undefined} />
         <CartButton className="hidden text-[#1c1f24] md:inline-block" />
         {session ? <CustomerNotificationBell /> : null}
-        {session ? <AccountMenu /> : null}
+        {session ? <AccountMenu pictureUrl={pictureUrl} /> : null}
       </div>
     </header>
   );

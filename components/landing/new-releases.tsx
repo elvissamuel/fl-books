@@ -28,7 +28,7 @@ export async function NewReleases() {
 
   return (
     <RevealSection className="px-6 py-8 sm:px-10 lg:px-14" aria-labelledby="new-releases">
-      <div className="mx-auto max-w-[1180px]">
+      <div className="w-full">
         <SectionHeading
           id="new-releases"
           title="New Releases"

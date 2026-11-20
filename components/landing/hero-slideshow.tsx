@@ -19,7 +19,6 @@ const navLinks = [
 
 const bookCrop = "[object-view-box:inset(12.2%_21.6%_5.8%_27.8%)]";
 const slideMs = 6500;
-const moveMs = 900;
 
 type HeroSlide = {
   src: string;
@@ -73,23 +72,18 @@ const slides: HeroSlide[] = [
     ink: "dark",
   },
   {
-    src: "/wedluck.png",
+    src: "/Wedluck-1.png",
     alt: "Wedluck",
     title: "Marriage Isn't Left To Chance, Discover The Wisdom Behind Wedluck",
     body: "A refreshing, faith-rooted take on love and commitment, revealing that a thriving marriage is built on wisdom, not luck.",
     overlay: "rgba(6, 64, 60, 0.9)",
     ink: "light",
-    flat: true,
   },
 ];
 
-const reel = [...slides, slides[0]];
-
-export function HeroSlideshow({ signedIn }: { signedIn: boolean }) {
-  const [visual, setVisual] = useState(0);
-  const [animate, setAnimate] = useState(true);
+export function HeroSlideshow({ signedIn, pictureUrl = "" }: { signedIn: boolean; pictureUrl?: string }) {
+  const [active, setActive] = useState(0);
   const [reduce, setReduce] = useState(false);
-  const active = visual >= slides.length ? 0 : visual;
   const slide = slides[active];
   const light = slide.ink === "light";
 
@@ -104,20 +98,10 @@ export function HeroSlideshow({ signedIn }: { signedIn: boolean }) {
   useEffect(() => {
     if (reduce) return;
     const timer = window.setInterval(() => {
-      setAnimate(true);
-      setVisual((current) => current + 1);
+      setActive((current) => (current + 1) % slides.length);
     }, slideMs);
     return () => window.clearInterval(timer);
   }, [reduce]);
-
-  useEffect(() => {
-    if (visual < slides.length) return;
-    const timer = window.setTimeout(() => {
-      setAnimate(false);
-      setVisual(0);
-    }, moveMs);
-    return () => window.clearTimeout(timer);
-  }, [visual]);
 
   return (
     <section className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-[#0c0e10]">
@@ -157,7 +141,7 @@ export function HeroSlideshow({ signedIn }: { signedIn: boolean }) {
           <CartButton className={cn("hidden md:inline-block", light ? "text-white" : "text-[#1c1f24]")} />
           {signedIn ? <CustomerNotificationBell tone={light ? "light" : "dark"} /> : null}
           {signedIn ? (
-            <AccountMenu />
+            <AccountMenu pictureUrl={pictureUrl} />
           ) : (
             <a
               href="/login"
@@ -169,8 +153,8 @@ export function HeroSlideshow({ signedIn }: { signedIn: boolean }) {
         </div>
       </header>
 
-      <div className="relative z-10 grid w-full flex-1 items-center gap-8 px-6 pt-4 pb-14 sm:px-10 lg:grid-cols-[minmax(0,1fr)_minmax(300px,48%)] lg:px-14 lg:pb-16">
-        <div className="relative max-w-[640px]">
+      <div className="relative z-10 grid w-full flex-1 items-center gap-8 px-6 pt-4 pb-14 sm:px-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-6 lg:px-14 lg:pb-10">
+        <div className="relative">
           {slides.map((item, index) => {
             const shown = index === active;
             const pale = item.ink === "light";
@@ -186,7 +170,7 @@ export function HeroSlideshow({ signedIn }: { signedIn: boolean }) {
               >
                 <h1
                   className={cn(
-                    "text-[32px] leading-[1.18] font-semibold tracking-[-0.03em] sm:text-[40px] lg:text-[44px]",
+                    "text-[34px] leading-[1.12] font-semibold tracking-[-0.03em] sm:text-[42px] lg:text-[50px] xl:text-[54px]",
                     pale ? "text-white" : "text-[#1c1f24]",
                   )}
                 >
@@ -194,7 +178,7 @@ export function HeroSlideshow({ signedIn }: { signedIn: boolean }) {
                 </h1>
                 <p
                   className={cn(
-                    "mt-5 max-w-[560px] text-[14px] leading-6 sm:text-[15px]",
+                    "mt-5 max-w-[40rem] text-[18px] leading-8 sm:text-[20px] lg:text-[22px]",
                     pale ? "text-white/75" : "text-[#5c6570]",
                   )}
                 >
@@ -222,23 +206,19 @@ export function HeroSlideshow({ signedIn }: { signedIn: boolean }) {
           })}
         </div>
 
-        <div className="hero-reel relative ml-auto h-[250px] w-full max-w-[340px] overflow-hidden sm:h-[320px] sm:max-w-[400px] lg:h-[min(68vh,560px)] lg:w-[calc(min(68vh,560px)*0.72+4.25rem)] lg:max-w-none [container-type:inline-size]">
-          <div
-            className={cn(
-              "flex h-full",
-              animate && "transition-transform ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none",
-            )}
-            style={{
-              transform: `translateX(calc(${-visual} * (100cqi - 4.25rem)))`,
-              transitionDuration: animate ? `${moveMs}ms` : "0ms",
-            }}
-          >
-            {reel.map((item, index) => (
-              <div key={`${item.src}-${index}`} className="h-full w-[calc(100cqi-4.25rem)] shrink-0 pr-5">
-                <HeroBook slide={item} priority={index < 2} />
-              </div>
-            ))}
-          </div>
+        <div className="relative ml-auto h-[280px] w-full max-w-[380px] sm:h-[360px] sm:max-w-[460px] lg:h-[min(76vh,680px)] lg:w-[calc(min(76vh,680px)*0.78)] lg:max-w-none">
+          {slides.map((item, index) => (
+            <div
+              key={item.src}
+              className={cn(
+                "absolute inset-0 transition-opacity duration-700 ease-out motion-reduce:transition-none",
+                index === active ? "opacity-100" : "opacity-0",
+              )}
+              aria-hidden={index === active ? undefined : true}
+            >
+              <HeroBook slide={item} priority={index < 2} />
+            </div>
+          ))}
         </div>
       </div>
     </section>

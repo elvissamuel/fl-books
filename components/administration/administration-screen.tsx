@@ -10,7 +10,7 @@ import {
   AdministrationTable,
   AdministrationTableSkeleton,
 } from "@/components/administration/administration-table";
-import { BooksPagination } from "@/components/books/books-pagination";
+import { BooksPagination, resultsLabel } from "@/components/books/books-pagination";
 import { Button } from "@/components/ui/button";
 import type { AdminAccount } from "@/core/auth/admin-api";
 import type { AdminListFilter } from "@/core/administration/types";
@@ -147,8 +147,8 @@ export function AdministrationScreen() {
 
       {pageData ? (
         <div className="mt-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-neutral-500">
-            Page {page} of {Math.max(pageData.totalPage, 1)}
+          <p className="text-sm text-neutral-500">
+            {resultsLabel(page, pageSize, pageData.totalElements)}
           </p>
           <BooksPagination
             page={page}

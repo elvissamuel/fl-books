@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { User } from "lucide-react";
 import { clearCustomerSession } from "@/app/customer/session/actions";
 import { ptSerif } from "@/lib/public-font";
 
-export function AccountMenu() {
+export function AccountMenu({ pictureUrl = "" }: { pictureUrl?: string }) {
   const router = useRouter();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -64,7 +65,20 @@ export function AccountMenu() {
         }}
         className="rounded-full"
       >
-        <Image src="/admin-profile.png" alt="" width={32} height={32} className="size-8 rounded-full object-cover" />
+        {pictureUrl ? (
+          <Image
+            src={pictureUrl}
+            alt=""
+            width={32}
+            height={32}
+            unoptimized
+            className="size-8 rounded-full object-cover"
+          />
+        ) : (
+          <span className="inline-flex size-8 items-center justify-center rounded-full bg-[#eef0f3] text-[#1c1f24]">
+            <User className="size-4" strokeWidth={1.85} />
+          </span>
+        )}
       </button>
       {open
         ? createPortal(
